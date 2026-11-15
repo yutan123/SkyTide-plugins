@@ -11,7 +11,7 @@ tidebot_meme_search/
 ├── manifest.json       必需：运行清单
 ├── main.js             必需：manifest.entry 指定的实际入口，可改名
 ├── README.md           必需：用途、配置、权限、使用方法
-├── LICENSE             必需：代码使用许可
+├── LICENSE             可选：代码使用许可
 ├── market.json         市场申请必需：不含 commit 的市场信息
 ├── config.schema.json  可选：独立配置 Schema
 ├── icon.png            可选：清单引用的图标
