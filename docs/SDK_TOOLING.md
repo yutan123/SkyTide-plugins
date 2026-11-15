@@ -76,7 +76,7 @@ mock.dispatch('tool', 'recent', {
 
 ```sh
 python3 tools/pack_plugin.py examples/hello --check
-python3 tools/pack_plugin.py examples/hello --out hello.tideplugin
+python3 tools/pack_plugin.py examples/hello --out hello.zip
 ```
 
 工具检查基础清单、能力与权限、包内引用、origin、符号链接及容量。宿主安装校验还会检查参数 Schema、声明式布局、ZIP 目录与 CRC，安装校验是最终规则。

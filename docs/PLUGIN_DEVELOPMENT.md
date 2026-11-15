@@ -27,7 +27,7 @@
 
 GitHub 仓库布局、上传及市场审核申请见[插件仓库与市场提交指南](MARKET_SUBMISSION.md)。
 
-ZIP 根目录直接放这些文件，不能额外套一个顶级目录。扩展名支持 `.zip` 和 `.tideplugin`。
+ZIP 根目录直接放这些文件，不能额外套一个顶级目录。扩展名使用 `.zip`。
 
 ```text
 manifest.json          必需：身份、版本、入口及能力声明
