@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""Pack a plugin directory into a .tideplugin ZIP for sideloading.
-
+"""Pack a plugin directory into a ZIP for sideloading.
 Usage:
-  python3 tools/pack_plugin.py examples/hello
-  python3 tools/pack_plugin.py examples/hello --out /tmp/hello.tideplugin
-
+  python3 tools/pack_plugin.py examples/hello --out /tmp/hello.zip
 The ZIP will contain files at the root level (no extra wrapper directory).
 """
 import argparse
@@ -20,7 +17,7 @@ from validate_plugin import validate
 def main():
     parser = argparse.ArgumentParser(description='Pack a TideBot plugin directory into a ZIP.')
     parser.add_argument('dir', help='Plugin source directory containing manifest.json')
-    parser.add_argument('--out', help='Output path (default: <dir>.tideplugin)')
+    parser.add_argument('--out', help='Output path (default: <dir>.zip)')
     parser.add_argument('--check', action='store_true', help='Validate without writing an archive')
     args = parser.parse_args()
     src = Path(args.dir).resolve()
@@ -34,7 +31,7 @@ def main():
     if not (src / 'manifest.json').exists():
         sys.exit(f'Error: {src}/manifest.json not found')
 
-    out = Path(args.out) if args.out else src.with_suffix('.tideplugin')
+    out = Path(args.out) if args.out else src.with_suffix('.zip')
     out = out.resolve()
     if out == src or src in out.parents:
         sys.exit('Error: output must be outside the plugin source directory')
@@ -45,7 +42,7 @@ def main():
 
     temporary = None
     try:
-        with tempfile.NamedTemporaryFile(dir=out.parent, prefix='.tideplugin-', delete=False) as stream:
+        with tempfile.NamedTemporaryFile(dir=out.parent, prefix='.zip-', delete=False) as stream:
             temporary = Path(stream.name)
         with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
             for path in paths:

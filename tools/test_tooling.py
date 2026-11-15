@@ -23,13 +23,13 @@ class ToolingTests(unittest.TestCase):
             base = Path(folder)
             src = base / 'sample'
             src.mkdir()
-            manifest = {'id': 'test.sample', 'name': 'Sample', 'version': '1.0.0',
+            manifest = {'id': 'tidebot_test_sample', 'name': 'Sample', 'version': '1.0.0',
                         'entry': 'main.js', 'permissions': ['tasks', 'notifications'],
                         'hooks': ['task.trigger', 'chat.message'],
                         'requiredCapabilities': ['events.chat', 'tasks', 'network.transfer']}
             (src / 'manifest.json').write_text(json.dumps(manifest))
             (src / 'main.js').write_text("tide.on('task.trigger', () => null);")
-            out = base / 'package.tideplugin'
+            out = base / 'package.zip'
             command = [sys.executable, '-B', str(ROOT / 'tools/pack_plugin.py'), str(src), '--out', str(out)]
             first = subprocess.run(command, capture_output=True, text=True)
             self.assertEqual(first.returncode, 0, first.stderr)
@@ -47,7 +47,7 @@ class ToolingTests(unittest.TestCase):
             failed = subprocess.run(command, capture_output=True, text=True)
             self.assertNotEqual(failed.returncode, 0)
             self.assertEqual(hashlib.sha256(out.read_bytes()).hexdigest(), digest)
-            self.assertFalse(list(base.glob('.tideplugin-*')))
+            self.assertFalse(list(base.glob('.zip-*')))
 
 
 if __name__ == '__main__':

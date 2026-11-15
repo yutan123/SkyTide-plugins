@@ -100,9 +100,9 @@ ID 必须以 `tidebot` 开头，不区分大小写；总长度 6～64，只允�
 
 ```sh
 python3 tools/pack_plugin.py /path/to/your/plugin --check
-python3 tools/pack_plugin.py /path/to/your/plugin --out /path/to/output/plugin.tideplugin
+python3 tools/pack_plugin.py /path/to/your/plugin --out /path/to/output/plugin.zip
 ```
 
-本地手动导入的 ZIP 或 `.tideplugin` 需要将 `manifest.json` 放在压缩包根目录。市场安装会自动剥离 GitHub ZIP 的一层仓库包装目录，但该目录下面必须直接存在清单。GitHub 网页的 **Download ZIP** 通常带包装目录，不应直接当成手动导入包。
+本地手动导入的 ZIP 文件需要将 `manifest.json` 放在压缩包根目录。市场安装会自动剥离 GitHub ZIP 的一层仓库包装目录，但该目录下面必须直接存在清单。GitHub 网页的 **Download ZIP** 通常带包装目录，不应直接当成手动导入包。
 
 提交审核前，在 APP 中导入打包结果，检查配置、启用、功能调用、停用及更新后的数据保留。只申请实际需要的权限和网络域名。不得隐藏远程下载执行代码、窃取数据或绕过宿主限制；审核批准的是具体提交，不是该仓库未来所有代码。
