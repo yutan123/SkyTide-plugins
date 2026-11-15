@@ -1,6 +1,6 @@
 {
   "apiVersion": 1,
-  "id": "tide.example.hello",
+  "id": "tidebot.example.hello",
   "name": "Hello 示例",
   "version": "1.0.0",
   "description": "展示工具、配置、存储、UI 和 Hook 的最小参考插件",

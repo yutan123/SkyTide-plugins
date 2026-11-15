@@ -1,6 +1,6 @@
 {
   "apiVersion": 1,
-  "id": "author.media_sender",
+  "id": "tidebot.media_sender",
   "name": "媒体发送示例",
   "version": "1.0.0",
   "author": "author",

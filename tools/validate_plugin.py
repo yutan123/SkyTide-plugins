@@ -17,8 +17,8 @@ def validate(src):
     m = json.loads(manifest.read_text(encoding='utf-8'))
     if not isinstance(m, dict):
         raise ValueError('manifest must be an object')
-    if not isinstance(m.get('id'), str) or not re.fullmatch(r'[a-z][a-z0-9_.-]{2,63}', m['id']):
-        raise ValueError('invalid plugin id')
+    if not isinstance(m.get('id'), str) or not re.fullmatch(r'tidebot[a-z0-9_.-]{0,57}', m['id'], re.IGNORECASE):
+        raise ValueError('plugin id must start with tidebot (case-insensitive), use letters/digits/._-, and be at most 64 characters')
     if not isinstance(m.get('name'), str) or not m['name'].strip() or len(m['name']) > 80:
         raise ValueError('invalid plugin name')
     if not isinstance(m.get('version'), str) or not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?', m['version']):

@@ -2,6 +2,7 @@
 
 TideBot 插件使用 JavaScript 编写，以 `.tideplugin` ZIP 文件分发。
 
+- [插件仓库、GitHub 上传与市场审核申请](docs/MARKET_SUBMISSION.md)
 - [开发指南与 API](docs/PLUGIN_DEVELOPMENT.md)
 - [消息事件与持久任务](docs/EVENTS_AND_TASKS.md)
 - [通知、网络传输与诊断](docs/HOST_APIS.md)

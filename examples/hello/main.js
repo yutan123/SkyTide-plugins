@@ -1,4 +1,4 @@
-// TideBot 示例插件 — tide.example.hello
+// TideBot 示例插件 — tidebot.example.hello
 // 仅作开发参考，不随应用功能发布。
 // 展示：工具注册、配置读取、存储读写、生命周期、声明式 UI、Hook。
 

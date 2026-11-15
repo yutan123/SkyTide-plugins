@@ -1,6 +1,6 @@
 {
   "apiVersion": 1,
-  "id": "yutan123.meme_search",
+  "id": "tidebot_meme_search",
   "name": "联网表情包搜索",
   "version": "1.0.0",
   "description": "免费、免密钥搜索表情包，返回候选图片及来源供机器人选择。无配置、无界面。",

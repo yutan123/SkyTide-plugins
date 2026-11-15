@@ -23,6 +23,10 @@
 
 ## 2. 包结构
 
+插件 ID 必须以 `tidebot` 开头，前缀不区分大小写；总长度 6～64，仅允许英文字母、数字、点、下划线和连字符。例如 `tidebot_meme_search`、`tidebot.meme.search`、`TideBot.meme_search`。ID 是持久身份，发布后保持完整拼写和大小写不变。新安装和更新包均执行此规则。
+
+GitHub 仓库布局、上传及市场审核申请见[插件仓库与市场提交指南](MARKET_SUBMISSION.md)。
+
 ZIP 根目录直接放这些文件，不能额外套一个顶级目录。扩展名支持 `.zip` 和 `.tideplugin`。
 
 ```text
@@ -43,7 +47,7 @@ ui.json                可选：manifest.ui.entry 指向的 Flutter 声明式布
 ```json
 {
   "apiVersion": 1,
-  "id": "author.package",
+  "id": "tidebot.example",
   "name": "插件名称",
   "version": "1.0.0",
   "description": "说明插件提供的功能",
@@ -78,7 +82,7 @@ ui.json                可选：manifest.ui.entry 指向的 Flutter 声明式布
 }
 ```
 
-必需字段为 `id/name/version/entry`。`id` 是 3～64 位，首字符为小写字母，之后仅小写字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`ui` 均可省略。
+必需字段为 `id/name/version/entry`。`id` 是 6～64 位，必须以 tidebot 开头（不区分大小写），仅允许英文字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`ui` 均可省略。
 
 工具名须匹配 `[a-zA-Z][a-zA-Z0-9_]{0,39}`，同包内唯一，最多 32 个。AI 侧名称为 `tp_<插件ID的SHA256前16位>_<工具名>`，插件只用自己的原始工具名注册，无需计算宿主前缀。
 
@@ -320,7 +324,7 @@ tide.registerTool('reply', async (args, context) => {
 ```json
 {
   "apiVersion": 1,
-  "id": "author.media_sender",
+  "id": "tidebot.media_sender",
   "name": "媒体发送示例",
   "version": "1.0.0",
   "author": "author",
@@ -391,7 +395,7 @@ my-plugin/
 ```json
 {
   "apiVersion": 1,
-  "id": "author.modular_example",
+  "id": "tidebot.modular_example",
   "name": "模块化示例",
   "version": "1.0.0",
   "entry": "main.js",
