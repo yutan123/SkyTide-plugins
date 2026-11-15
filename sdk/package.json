@@ -1,0 +1,11 @@
+{
+  "name": "@tidebot/plugin-sdk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TideBot plugin development types",
+  "types": "index.d.ts",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "test": "node --test events.test.cjs"
+  }
+}
