@@ -1,10 +1,10 @@
 export interface HostError extends Error { code: 'CANCELLED' | 'TIMEOUT' | 'INVALID_ARGUMENT' | 'NETWORK' | 'INVALID_STATE' | 'HOST_ERROR'; retryable: boolean }
 export type Json = null | boolean | number | string | Json[] | {[key: string]: Json};
-export type MediaKind = 'image' | 'video' | 'audio' | 'document';
+export type MediaKind = 'image' | 'video' | 'audio' | 'document' | 'file';
 export interface Receipt { messageId: string; status: string; duplicate?: boolean; [key: string]: Json | undefined }
 export interface MediaResource { resourceId: string; kind: MediaKind; [key: string]: Json }
-export interface MediaDownloadOptions { url: string; kind: MediaKind; headers?: Record<string, string>; timeoutMs?: number }
-export interface MediaOptions { headers?: Record<string, string>; timeoutMs?: number; url?: string; resourceId?: string; caption?: string; requestId: string; duration?: number }
+export interface MediaDownloadOptions { fileName?: string; url: string; kind: MediaKind; headers?: Record<string, string>; timeoutMs?: number }
+export interface MediaOptions { fileName?: string; headers?: Record<string, string>; timeoutMs?: number; url?: string; resourceId?: string; caption?: string; requestId: string; duration?: number }
 export interface BotInfo { id: string; name: string | null; desc: string | null; created_at: number | null }
 export interface Message { id: string; role: string; type: string; content: string | null; timestamp: number }
 export interface Chat {
@@ -18,6 +18,7 @@ export interface Chat {
   sendVideo(options: MediaOptions): Promise<Receipt>;
   sendAudio(options: MediaOptions): Promise<Receipt>;
   sendDocument(options: MediaOptions): Promise<Receipt>;
+  sendFile(options: MediaOptions): Promise<Receipt>;
   getStatus(requestId: string): Promise<Receipt | {status: 'not_found'}>;
 }
 export type MediaProcessOptions =
@@ -26,7 +27,7 @@ export type MediaProcessOptions =
   | {operation: 'hls'; url: string; headers?: Record<string, string>; format?: 'mp4' | 'm4a'};
 export interface Media {
   saveFile(options: {resourceId: string; path: string}): Promise<{path: string; size: number}>;
-  fromFile(options: {path: string; kind: MediaKind}): Promise<MediaResource>;
+  fromFile(options: {path: string; kind: MediaKind; fileName?: string}): Promise<MediaResource>;
   process(options: MediaProcessOptions): Promise<MediaResource>;
   download(options: MediaDownloadOptions): Promise<MediaResource>;
   inspect(resourceId: string): Promise<MediaResource>;
@@ -122,6 +123,7 @@ export interface Tide {
     sendVideo(context: Context, options: MediaOptions): Promise<Receipt>;
     sendAudio(context: Context, options: MediaOptions): Promise<Receipt>;
     sendDocument(context: Context, options: MediaOptions): Promise<Receipt>;
+    sendFile(context: Context, options: MediaOptions): Promise<Receipt>;
     getStatus(context: Context, requestId: string): ReturnType<Chat['getStatus']>;
   };
   readonly media: {

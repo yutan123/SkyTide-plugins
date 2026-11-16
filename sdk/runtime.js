@@ -43,6 +43,7 @@
         sendVideo: options => call('chat.sendVideo', options),
         sendAudio: options => call('chat.sendAudio', options),
         sendDocument: options => call('chat.sendDocument', options),
+        sendFile: options => call('chat.sendFile', options),
         getStatus: requestId => call('chat.status', {requestId}),
       }),
       notifications: Object.freeze({show: options => call('notifications.show', options)}),
@@ -88,7 +89,7 @@
       generate: options => rpc('ai.generate', options),
       cancel: requestId => rpc('ai.cancel', {requestId}),
     }),
-    capabilities: Object.freeze(['chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority']),
+    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority']),
     chat: Object.freeze({
       getContext: context => context.chat.getContext(),
       getBotInfo: context => context.chat.getBotInfo(),
@@ -99,6 +100,7 @@
       sendVideo: (context, options) => context.chat.sendVideo(options),
       sendAudio: (context, options) => context.chat.sendAudio(options),
       sendDocument: (context, options) => context.chat.sendDocument(options),
+      sendFile: (context, options) => context.chat.sendFile(options),
       getStatus: (context, requestId) => context.chat.getStatus(requestId),
     }),
     media: Object.freeze({

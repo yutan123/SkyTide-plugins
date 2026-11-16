@@ -70,6 +70,13 @@ const response = await tide.network.uploadFile({
 - `fileProgress(requestId)` 返回 `{requestId, bytes, state}` 或 `null`。bytes 是下载接收或上传读取的正文累计字节，state 为 running/completed/failed/timeout/cancelled；最近保留最多 128 条记录，不是跨重启持久状态。
 - `cancelFile(requestId)` 返回是否取消活动请求。插件停用、更新和退出也会关闭请求。下载失败或取消不会替换目标文件；上传已经抵达服务端的字节无法回滚。
 
+## 发送文件与音频
+`context.chat.sendFile()` 可把任意格式的远程文件或当前上下文的资源发送为文件卡片，单文件上限 256 MiB。使用 `context.media.fromFile({path, kind: 'file', fileName?})` 导入私有文件；发送时可通过 `fileName` 设置含扩展名的名称。
+
+音频使用 `sendAudio()` 发送为语音，使用 `sendFile()` 发送为音频文件。发送为文件时保留原始内容，不进行媒体存储转码。同一个 `audio` 资源可以用于两种发送形式。
+
+完整参数、文件名规则、权限与示例见 [宿主 API：通用文件发送](HOST_APIS.md#通用文件发送)。
+
 ## 媒体合并、封装与转码
 
 这些 API 仅在工具调用或有会话上下文的事件处理期间可用；全局 `tide.media.process(context, options)` 等价于对应 context 方法。

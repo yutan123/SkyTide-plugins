@@ -45,6 +45,41 @@ const response = await result;
 
 HTTP 非成功状态仍返回响应，由插件检查 `status`。网络异常通过 Promise 拒绝传递。
 
+## 通用文件发送
+`context.chat.sendFile({url, requestId, fileName?, caption?, headers?, timeoutMs?})` 或 `{resourceId, requestId, fileName?, caption?}` 发送任意格式的文件附件。ZIP、Office 文档、文本、二进制及音视频文件均可发送，不按扩展名或文件头限制格式。单文件最多 256 MiB，消息类型为 `file`，显示文件卡片，点击调用设备上的应用打开；能否预览由设备已安装应用决定。
+
+发送需要 `chat.send`；直接使用 URL 另需 `network`、`media.download` 和对应 `networkOrigins`。`url` 与 `resourceId` 互斥。资源仅限当前会话上下文，可直接使用 `file`、`image`、`video`、`audio` 或 `document` 类型资源；文件发送不转码、不改变原始内容。
+
+`fileName` 是包含扩展名的文件名，最多 180 个字符且 UTF-8 最多 240 字节，不允许路径分隔符、控制字符、`.`、`..` 或首尾空白。优先使用发送时指定的名称，其次使用资源记录的名称；URL 下载默认取原始 URL 最后一个路径片段，不能作为合法文件名时使用 `attachment.bin`；不读取 Content-Disposition。已有媒体资源没有文件名时使用 `attachment.<识别出的扩展名>`。文件按消息独立保存，保留名称，不覆盖同名附件。请求 ID 去重、单次上下文最多发送 10 条消息、权限和生命周期规则与其他发送接口一致。
+
+`context.media.download({url, kind: 'file', fileName?, headers?, timeoutMs?})` 下载通用文件，`context.media.fromFile({path, kind: 'file', fileName?})` 从插件私有目录导入；后者需 `files`、`media.download`。通用文件资源的 `extension` 为 `bin`，原文件名记录在 `fileName`；文件卡片及外部打开使用文件名的扩展名。`inspect()` 返回资源元数据，不暴露宿主路径。插件可声明 `requiredCapabilities: ["chat.files"]` 要求支持这些接口的宿主。
+
+```javascript
+await context.chat.sendFile({
+  url: 'https://cdn.example.com/archive.zip',
+  fileName: '资料.zip', requestId: 'archive-001'
+});
+const local = await context.media.fromFile({path: 'exports/data.csv', kind: 'file'});
+await context.chat.sendFile({resourceId: local.resourceId, requestId: 'data-001'});
+```
+
+### 音频发送为语音或文件
+`sendAudio()` 发送可播放的语音消息，`sendFile()` 发送文件卡片。两种形式由插件明确选择，同一个音频资源可复用，分别使用不同的 `requestId`。
+
+```javascript
+const audio = await context.media.download({
+  url: 'https://cdn.example.com/music.mp3', kind: 'audio'
+});
+await context.chat.sendAudio({
+  resourceId: audio.resourceId, duration: 30, requestId: 'voice-001'
+});
+await context.chat.sendFile({
+  resourceId: audio.resourceId, fileName: '音乐.mp3', requestId: 'audio-file-001'
+});
+```
+
+作为文件发送的音视频保持文件卡片，不自动切换为语音或视频。`sendAudio()` 保留现有音频格式校验及 64 MiB 上限；通用 `file` 资源不能直接传给 `sendAudio()`，应以 `kind: 'audio'` 下载或导入后再发送为语音。
+
 ## PDF 文件与媒体元数据
 
 `context.chat.sendDocument({url, requestId, caption?})` 或 `{resourceId, requestId, caption?}` 发送 PDF 文档。文档类型为 `document`，最多 64 MiB，宿主检查 `%PDF-` 文件头；扩展名或服务器 Content-Type 不能替代内容检查。发送需要 `chat.send`，远程下载还需要 `network`、`media.download`。

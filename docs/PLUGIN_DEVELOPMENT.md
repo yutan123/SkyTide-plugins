@@ -321,7 +321,7 @@ tide.registerTool('reply', async (args, context) => {
 
 ### 下载请求头与动态 CDN
 
-`media.download` 以及直接提供 `url` 的 `sendImage/sendVideo/sendAudio/sendDocument` 接受 `headers` 字符串映射和 `timeoutMs` 正整数（最大 330000 毫秒）。可设置 `Referer`、`User-Agent`、`Cookie` 和 `Authorization`。同 origin 重定向保留请求头；跨 origin 重定向移除 `Cookie`、`Authorization`、`Proxy-Authorization` 和 `Host`，其他头继续传递。需要凭证的最终 CDN 可以由插件先取得最终地址，再直接调用下载接口。
+`media.download` 以及直接提供 `url` 的 `sendImage/sendVideo/sendAudio/sendDocument/sendFile` 接受 `headers` 字符串映射和 `timeoutMs` 正整数（最大 330000 毫秒）。可设置 `Referer`、`User-Agent`、`Cookie` 和 `Authorization`。同 origin 重定向保留请求头；跨 origin 重定向移除 `Cookie`、`Authorization`、`Proxy-Authorization` 和 `Host`，其他头继续传递。需要凭证的最终 CDN 可以由插件先取得最终地址，再直接调用下载接口。
 
 使用此能力的插件应声明：
 
@@ -537,3 +537,6 @@ UI 事件没有聊天调用上下文，不能凭空选择机器人发送消息�
 宿主提供 `files`、`network.files`、`media.process`、`schema.nested`、`storage.large`、`tasks.recurring` 能力，可在 `requiredCapabilities` 中声明。私有文件与二进制传输、媒体合并和转码见[文件与媒体处理](FILES_AND_MEDIA.md)；周期调度和修改见[消息事件与持久任务](EVENTS_AND_TASKS.md)。
 
 常驻数据处理可通过清单 `workers` 与 `tide.registerWorker` 注册，无需聊天事件触发；`tide.sleep` 提供可取消等待。`tide.database` 提供文档集合、事务批量操作、迁移与向量检索，`tide.ai` 使用应用已配置的模型生成文本，`tide.registerCommand` 处理聊天命令。声明规则、权限、配额与运行条件见[常驻任务、AI 与文档数据库](WORKERS_AI_DATABASE.md)。
+
+## 通用文件消息
+宿主通过 `context.chat.sendFile()` 发送任意格式附件，支持远程 URL 和当前上下文的资源引用，单文件上限 256 MiB。音频可由插件选择 `sendAudio()` 发送语音，或 `sendFile()` 发送文件卡片。`sendDocument()` 继续专用于 PDF。参数、权限、文件名及能力声明见 [HOST_APIS.md](HOST_APIS.md#通用文件发送)。
