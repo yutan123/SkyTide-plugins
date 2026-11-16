@@ -25,12 +25,33 @@ def validate(src):
         raise ValueError('invalid semantic version')
     if m.get('apiVersion', 1) != 1:
         raise ValueError('unsupported apiVersion')
-    capabilities = {'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer'}
-    for field, allowed in [('permissions', {'storage', 'network', 'chat.read', 'chat.send', 'media.download', 'tasks', 'notifications'}), ('requiredCapabilities', capabilities), ('hooks', {'tool.before', 'tool.after', 'app.ready', 'chat.message', 'chat.sent', 'task.trigger'})]:
+    capabilities = {'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority'}
+    for field, allowed in [('permissions', {'workers', 'database', 'ai', 'storage', 'files', 'media.process', 'network', 'chat.read', 'chat.send', 'media.download', 'tasks', 'notifications'}), ('requiredCapabilities', capabilities), ('hooks', {'tool.before', 'tool.after', 'app.ready', 'chat.message', 'chat.sent', 'task.trigger'})]:
         values = m.get(field, [])
         if not isinstance(values, list) or any(not isinstance(v, str) or v not in allowed for v in values):
             raise ValueError('unsupported ' + field)
 
+    workers = m.get('workers', [])
+    if not isinstance(workers, list) or len(workers) > 8:
+        raise ValueError('workers must be an array of at most 8 items')
+    names = set()
+    for worker in workers:
+        if not isinstance(worker, dict) or not isinstance(worker.get('name'), str) or not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_]{0,39}', worker['name']) or worker['name'] in names:
+            raise ValueError('invalid or duplicate worker name')
+        names.add(worker['name'])
+        interval = worker.get('intervalMs', 5000)
+        if type(interval) is not int or not 1000 <= interval <= 86400000:
+            raise ValueError('invalid worker intervalMs')
+    if workers and 'workers' not in m.get('permissions', []):
+        raise ValueError('workers permission required')
+    commands = m.get('commands', [])
+    if not isinstance(commands, list) or len(commands) > 32 or any(not isinstance(v, str) or not re.fullmatch(r'[a-z][a-z0-9_]{0,39}', v) for v in commands) or len(set(commands)) != len(commands):
+        raise ValueError('invalid or duplicate commands')
+    if commands and 'chat.read' not in m.get('permissions', []):
+        raise ValueError('commands require chat.read')
+    priority = m.get('eventPriority', 0)
+    if type(priority) is not int or not -100 <= priority <= 100:
+        raise ValueError('invalid eventPriority')
     def package_file(value):
         if not isinstance(value, str) or not value or '\\' in value or ':' in value or '\x00' in value:
             raise ValueError('invalid package path')
@@ -66,7 +87,10 @@ def validate(src):
     for origin in origins:
         if not isinstance(origin, str):
             raise ValueError('invalid origin')
-        u = urlsplit(origin)
-        if u.scheme != 'https' or not u.hostname or u.username or u.password or u.path or u.query or u.fragment:
-            raise ValueError('expected exact HTTPS origin')
+        if origin == '*':
+            continue
+        normalized = origin.replace('https://*.', 'https://', 1) if origin.startswith('https://*.') else origin
+        u = urlsplit(normalized)
+        if u.scheme != 'https' or not u.hostname or '*' in u.hostname or u.username or u.password or u.path or u.query or u.fragment:
+            raise ValueError('expected HTTPS origin, https://*.example.com, or *')
     return files

@@ -24,9 +24,12 @@ class ToolingTests(unittest.TestCase):
             src = base / 'sample'
             src.mkdir()
             manifest = {'id': 'tidebot_test_sample', 'name': 'Sample', 'version': '1.0.0',
-                        'entry': 'main.js', 'permissions': ['tasks', 'notifications'],
+                        'entry': 'main.js', 'permissions': ['tasks', 'notifications', 'files', 'media.process'],
                         'hooks': ['task.trigger', 'chat.message'],
-                        'requiredCapabilities': ['events.chat', 'tasks', 'network.transfer']}
+                        'requiredCapabilities': ['events.chat', 'tasks', 'network.transfer',
+                                                  'media.requestHeaders', 'network.originPatterns', 'files', 'network.files',
+                                                  'media.process', 'schema.nested', 'storage.large', 'tasks.recurring'],
+                         'networkOrigins': ['https://*.bilivideo.com', '*']}
             (src / 'manifest.json').write_text(json.dumps(manifest))
             (src / 'main.js').write_text("tide.on('task.trigger', () => null);")
             out = base / 'package.zip'

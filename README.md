@@ -1,10 +1,18 @@
 # TideBot 插件
-TideBot 插件使用 JavaScript 编写，以普通 `.zip` 文件分发。
-- [插件仓库、GitHub 上传与市场审核申请](docs/MARKET_SUBMISSION.md)
+
+TideBot 插件使用 JavaScript 编写，由应用内置运行时执行，以普通 `.zip` 文件分发。应用无需安装额外语言运行环境。
+
 - [开发指南与 API](docs/PLUGIN_DEVELOPMENT.md)
 - [消息事件与持久任务](docs/EVENTS_AND_TASKS.md)
+- [常驻任务、AI 与文档数据库](docs/WORKERS_AI_DATABASE.md)
+- [私有文件与媒体处理](docs/FILES_AND_MEDIA.md)
 - [通知、网络传输与诊断](docs/HOST_APIS.md)
+- [SDK 类型与本地测试](docs/SDK_TOOLING.md)
+- [插件仓库、GitHub 上传与市场审核申请](docs/MARKET_SUBMISSION.md)
 - [示例插件](examples/)
+
+[数据任务示例](examples/data_worker) 展示启用后自主采样、私有数据库持久化和 `/workerstats`、`/workersummary` 命令；AI 仅在请求摘要时调用。常驻任务在宿主引擎存活期间运行，后台执行取决于系统调度。
+
 ## 生成插件 ZIP（可选）
 
 `tools/pack_plugin.py` 是一个可选的打包工具，用来把插件目录压缩成可导入的 ZIP 文件。它不是提交市场申请的必填步骤。

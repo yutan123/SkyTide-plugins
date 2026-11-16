@@ -5,6 +5,6 @@
   "description": "TideBot plugin development types",
   "types": "index.d.ts",
   "scripts": {
-    "test": "node --test events.test.cjs"
+    "test": "node --test *.test.cjs"
   }
 }

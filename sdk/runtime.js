@@ -1,7 +1,7 @@
 // TideBot JavaScript SDK, API version 1.
 (() => {
   'use strict';
-  const tools = new Map(), events = new Map(), pending = new Map();
+  const tools = new Map(), workers = new Map(), commands = new Map(), events = new Map(), pending = new Map();
   let sequence = 0;
   const send = (channel, data) => sendMessage(channel, JSON.stringify(data));
   const rpc = (method, args = {}) => new Promise((resolve, reject) => {
@@ -49,10 +49,14 @@
       tasks: Object.freeze({
         list: () => call('tasks.list'),
         schedule: options => call('tasks.schedule', options),
+        update: options => call('tasks.update', options),
         cancel: id => call('tasks.cancel', {id}),
       }),
       media: Object.freeze({
         download: options => call('media.download', options),
+        fromFile: options => call('media.fromFile', options),
+        saveFile: options => call('media.saveFile', options),
+        process: options => call('media.process', options),
         inspect: resourceId => call('media.inspect', {resourceId}),
         release: resourceId => call('media.release', {resourceId}),
       }),
@@ -60,7 +64,31 @@
   };
   globalThis.tide = Object.freeze({
     apiVersion: 1,
-    capabilities: Object.freeze(['chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer']),
+    sleep: ms => rpc('runtime.sleep', {ms}),
+    registerCommand: (name, handler) => {
+      if (typeof name !== 'string' || typeof handler !== 'function' || commands.has(name)) throw new Error('Invalid or duplicate command');
+      commands.set(name, handler);
+    },
+    registerWorker: (name, handler) => {
+      if (typeof name !== 'string' || typeof handler !== 'function' || workers.has(name)) throw new Error('Invalid or duplicate worker');
+      workers.set(name, handler);
+    },
+    database: Object.freeze({
+      get: (collection, key) => rpc('database.get', {collection, key}),
+      put: (collection, key, value, options = {}) => rpc('database.put', {...options, collection, key, value}),
+      delete: (collection, key) => rpc('database.delete', {collection, key}),
+      query: (collection, options = {}) => rpc('database.query', {...options, collection}),
+      search: (collection, vector, options = {}) => rpc('database.search', {...options, collection, vector}),
+      batch: operations => rpc('database.batch', {operations}),
+      version: () => rpc('database.version'),
+      migrate: (from, to, operations) => rpc('database.migrate', {from, to, operations}),
+    }),
+    ai: Object.freeze({
+      listModels: () => rpc('ai.listModels'),
+      generate: options => rpc('ai.generate', options),
+      cancel: requestId => rpc('ai.cancel', {requestId}),
+    }),
+    capabilities: Object.freeze(['chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority']),
     chat: Object.freeze({
       getContext: context => context.chat.getContext(),
       getBotInfo: context => context.chat.getBotInfo(),
@@ -75,6 +103,9 @@
     }),
     media: Object.freeze({
       download: (context, options) => context.media.download(options),
+      fromFile: (context, options) => context.media.fromFile(options),
+      saveFile: (context, options) => context.media.saveFile(options),
+      process: (context, options) => context.media.process(options),
       release: (context, resourceId) => context.media.release(resourceId),
     }),
     config: Object.freeze(globalThis.__tideConfig || {}),
@@ -103,10 +134,21 @@
         throw new Error('Storage update contention exceeded retry limit');
       },
     }),
+    files: Object.freeze({
+      read: options => rpc('files.read', options),
+      write: options => rpc('files.write', options),
+      list: (directory = '') => rpc('files.list', {directory}),
+      stat: path => rpc('files.stat', {path}),
+      delete: path => rpc('files.delete', {path}),
+    }),
     resources: Object.freeze({readText: path => rpc('resources.readText', {path}), readJson: path => rpc('resources.readJson', {path})}),
     request: options => rpc('http.request', options),
     network: Object.freeze({
       transfer: options => rpc('http.transfer', options),
+      downloadFile: options => rpc('http.downloadFile', options),
+      uploadFile: options => rpc('http.uploadFile', options),
+      cancelFile: requestId => rpc('http.cancelFile', {requestId}),
+      fileProgress: requestId => rpc('http.fileProgress', {requestId}),
       cancel: requestId => rpc('http.cancel', {requestId}),
       progress: requestId => rpc('http.progress', {requestId}),
     }),
@@ -115,6 +157,26 @@
   });
   globalThis.__tideDispatch = (id, kind, name, payload) => {
     Promise.resolve().then(async () => {
+      if (kind === 'validateCommands') {
+        for (const name of payload) if (!commands.has(name)) throw new Error('Unregistered command: ' + name);
+        for (const name of commands.keys()) if (!payload.includes(name)) throw new Error('Undeclared command: ' + name);
+        return null;
+      }
+      if (kind === 'command') {
+        const handler = commands.get(name);
+        if (!handler) throw new Error('Unregistered command: ' + name);
+        return await handler(payload.args, scoped(payload.contextToken));
+      }
+      if (kind === 'validateWorkers') {
+        for (const name of payload) if (!workers.has(name)) throw new Error('Unregistered worker: ' + name);
+        for (const name of workers.keys()) if (!payload.includes(name)) throw new Error('Undeclared worker: ' + name);
+        return null;
+      }
+      if (kind === 'worker') {
+        const handler = workers.get(name);
+        if (!handler) throw new Error('Unregistered worker: ' + name);
+        return await handler(Object.freeze({name, sleep: ms => rpc('runtime.sleep', {ms, workerToken: payload.workerToken})}));
+      }
       if (kind === 'validate') {
         for (const tool of payload) if (!tools.has(tool)) throw new Error('Unregistered tool: ' + tool);
         for (const tool of tools.keys()) if (!payload.includes(tool)) throw new Error('Undeclared tool: ' + tool);

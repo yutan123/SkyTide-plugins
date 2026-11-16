@@ -1,0 +1,14 @@
+{
+  "apiVersion": 1,
+  "id": "tidebot.example.data_worker",
+  "name": "数据任务示例",
+  "version": "1.0.0",
+  "description": "常驻采样、私有数据库、聊天命令与按需 AI 摘要",
+  "author": "TideBot",
+  "entry": "main.js",
+  "permissions": ["workers", "database", "ai", "chat.read", "chat.send"],
+  "requiredCapabilities": ["workers", "database", "ai", "commands"],
+  "workers": [{"name": "sample", "intervalMs": 5000}],
+  "commands": ["workerstats", "workersummary"],
+  "eventPriority": 0
+}

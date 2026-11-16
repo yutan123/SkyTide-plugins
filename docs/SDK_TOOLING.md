@@ -1,5 +1,7 @@
 # SDK 类型与本地测试
 
+常驻任务、AI 文本生成、私有文档数据库与命令接口见[常驻任务、AI 与文档数据库](WORKERS_AI_DATABASE.md)。
+
 在 TypeScript 项目中安装本地类型包：
 
 ```sh
@@ -48,7 +50,7 @@ mock.dispatch('tool', 'recent', {
 
 ## 网络超时
 
-`tide.request({url, timeoutMs})` 接受正整数毫秒数，最大 330000。省略时使用宿主默认超时。网络请求仍要求 `network` 权限和精确 HTTPS origin，普通请求不跟随重定向。
+`tide.request({url, timeoutMs})` 接受正整数毫秒数，最大 330000。省略时使用宿主默认超时。网络请求仍要求 `network` 权限和 `networkOrigins` 授权（精确 HTTPS origin、`https://*.example.com` 或 `*`），普通请求不跟随重定向。
 
 ## 声明能力依赖
 
@@ -82,3 +84,7 @@ python3 tools/pack_plugin.py examples/hello --out hello.zip
 工具检查基础清单、能力与权限、包内引用、origin、符号链接及容量。宿主安装校验还会检查参数 Schema、声明式布局、ZIP 目录与 CRC，安装校验是最终规则。
 
 通知、可取消上传、PDF 文档、元数据与诊断接口见[宿主扩展接口](HOST_APIS.md)。Web UI 使用不包含 `allow-same-origin` 的 CSP sandbox，禁止依赖 Cookie、localStorage 或 IndexedDB 保存插件状态；持久状态通过宿主存储 API 管理。
+
+媒体请求头、下载超时及动态 CDN 授权的完整用法见[开发指南](PLUGIN_DEVELOPMENT.md#下载请求头与动态-cdn)。`media.requestHeaders` 与 `network.originPatterns` 可以加入 `requiredCapabilities`，以拒绝不支持这些能力的旧宿主。
+
+文件、媒体处理、递归 Schema、8 MiB 键值存储和周期任务分别声明 `files`、`network.files`、`media.process`、`schema.nested`、`storage.large`、`tasks.recurring` 能力。SDK 类型包含这些接口；mock 通过显式 handler 验证调用协议，媒体原生处理和持久任务执行由宿主提供。接口见[文件与媒体处理](FILES_AND_MEDIA.md)和[消息事件与持久任务](EVENTS_AND_TASKS.md)。

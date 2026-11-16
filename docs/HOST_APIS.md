@@ -1,5 +1,7 @@
 # 通知、网络传输与诊断
 
+常驻任务、AI 文本生成、私有文档数据库与命令接口见[常驻任务、AI 与文档数据库](WORKERS_AI_DATABASE.md)。
+
 ## 通知
 
 清单声明 `notifications` 权限后，在工具或消息、任务事件中调用：
@@ -12,7 +14,7 @@ await context.notifications.show({title: '提醒', body: '任务已完成'});
 
 ## 可取消网络传输
 
-原有 `tide.request()` 继续可用。需要取消、进度或 multipart 上传时使用 `tide.network`，清单声明 `network` 权限、精确 HTTPS `networkOrigins`，以及 `network.transfer` 能力依赖。
+原有 `tide.request()` 继续可用。需要取消、进度或 multipart 上传时使用 `tide.network`，清单声明 `network` 权限、`networkOrigins`（精确 HTTPS origin、`https://*.example.com` 或 `*`），以及 `network.transfer` 能力依赖。
 
 ```javascript
 const result = tide.network.transfer({
@@ -45,7 +47,7 @@ HTTP 非成功状态仍返回响应，由插件检查 `status`。网络异常通
 
 ## PDF 文件与媒体元数据
 
-`context.chat.sendDocument({url, requestId, caption?})` 或 `{resourceId, requestId, caption?}` 发送 PDF 文档。文档类型为 `document`，最多 20 MiB，宿主检查 `%PDF-` 文件头；扩展名或服务器 Content-Type 不能替代内容检查。发送需要 `chat.send`，远程下载还需要 `network`、`media.download`。
+`context.chat.sendDocument({url, requestId, caption?})` 或 `{resourceId, requestId, caption?}` 发送 PDF 文档。文档类型为 `document`，最多 64 MiB，宿主检查 `%PDF-` 文件头；扩展名或服务器 Content-Type 不能替代内容检查。发送需要 `chat.send`，远程下载还需要 `network`、`media.download`。
 
 `context.media.download({url, kind: 'document'})` 创建会话资源；`context.media.inspect(resourceId)` 返回该资源的 `resourceId/kind/size/extension`，不返回本地路径。资源只在当前上下文有效，用完可 `release(resourceId)`，处理结束后宿主清理。
 
@@ -67,3 +69,9 @@ HTTP 非成功状态仍返回响应，由插件检查 `status`。网络异常通
 `tide.diagnostics.getStatus()` 返回当前插件的 ID、版本、API 版本、运行状态、活动上下文数量和最后一个宿主记录错误；`package` 包含宿主记录的本地来源与已安装包 SHA-256。SHA-256 标识包内容，作者名称仅用于展示，不构成身份认证。运行日志通过 `tide.log()` 写入应用日志，不包含其它插件的私有存储。
 
 `context.tasks.list()` 返回当前机器人最近 100 个任务的 `id/due_at/state/attempts/error`。需要 `tasks` 权限。备份恢复会停用插件，并取消备份中的等待和运行任务，避免恢复旧租约后重复产生副作用；重新检查配置并启用插件后再安排新任务。
+
+媒体下载和直接 URL 发送支持 `headers` 与 `timeoutMs`，详见[开发指南](PLUGIN_DEVELOPMENT.md#下载请求头与动态-cdn)。普通请求及可取消传输均支持 GET、HEAD、OPTIONS、POST、PUT、PATCH、DELETE。
+
+## 私有文件和媒体处理
+
+`tide.files` 提供持久文件读写；`tide.network.downloadFile/uploadFile` 提供不经过 JavaScript 大字节串的流式传输；`context.media.process` 提供音视频合并、HLS 点播封装与转码；`context.media.fromFile/saveFile` 在私有文件与会话资源之间转换。参数、权限、配额与完整示例见[文件与媒体处理](FILES_AND_MEDIA.md)。

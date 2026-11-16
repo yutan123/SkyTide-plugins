@@ -1,5 +1,7 @@
 # TideBot 插件开发指南（SDK v1）
 
+常驻任务、AI 文本生成、私有文档数据库与命令接口见[常驻任务、AI 与文档数据库](WORKERS_AI_DATABASE.md)。
+
 本文面向 TideBot 插件开发者，介绍运行架构、插件包格式、权限、JavaScript SDK 与开发流程。插件可通过「侧边栏 → 插件 → 导入」安装。
 
 ## 1. 架构与运行方式
@@ -90,9 +92,9 @@ ui.json                可选：manifest.ui.entry 指向的 Flutter 声明式布
 
 ## 4. 配置和参数 Schema
 
-SDK v1 实现的是明确限定的 JSON Schema 子集：根节点必须为 `type: object` 和 `properties`；字段支持 `string/boolean/integer/number`，支持 `default`、`enum`、`required`、数字 `minimum/maximum`、字符串 `maxLength`。不提供嵌套对象、数组、`$ref`、联合类型、正则或完整 JSON Schema 解释器。未知输入键会被拒绝，即使清单省略 `additionalProperties`。
+SDK v1 实现的是明确限定的 JSON Schema 子集：根节点必须为 `type: object` 和 `properties`；字段支持 `string/boolean/integer/number/object/array`，支持递归 `properties`、数组 `items`、`default`、`enum`、`required`、数字 `minimum/maximum`、字符串 `minLength/maxLength` 和数组 `minItems/maxItems`。对象必须声明 `properties`，数组必须声明 `items`；最多 16 层、1000 个 Schema 节点，参数 JSON 最多 1 MiB，单字符串最多 65536 字符，未指定 `maxItems` 时数组最多 10000 项。未知输入键默认拒绝，设置对应对象的 `additionalProperties: true` 可保留额外 JSON 属性。不提供 `$ref`、联合类型、正则或完整 JSON Schema 解释器。
 
-设置表单中，字符串使用文本框，`format: password` 隐藏输入，布尔使用开关，数字使用数字输入，枚举使用下拉。保存保留 JSON 类型；插件启动及工具调用前重复校验，避免绕过界面的非法值。`required` 检查字段存在；若需要拒绝空字符串，应在插件逻辑中明确检查。默认值用于缺省字段，不会自动写入所有持久配置。
+设置表单中，字符串使用文本框，`format: password` 隐藏输入，布尔使用开关，数字使用数字输入，标量枚举使用下拉，数组和对象使用多行 JSON 编辑器。保存保留 JSON 类型；插件启动及工具调用前重复校验，避免绕过界面的非法值。`required` 检查字段存在；若需要拒绝空字符串，应在插件逻辑中明确检查。默认值用于缺省字段，不会自动写入所有持久配置。
 
 内联 `manifest.config` 优先于 `config.schema.json`。安装时将独立文件内容规范化进保存的清单。配置使用 Flutter Secure Storage，不向插件暴露其他插件的配置。`tide.config` 在每次启动时取得快照，修改设置后重启生效。
 
@@ -124,14 +126,14 @@ tide.registerTool('operation', async (args) => {
 
 工具声明与运行时注册必须一致。重复注册、漏注册或注册未声明的工具会导致启用失败。工具成功时宿主返回 `{"result":{"ok":true,"data":返回值}}`；异常转换成 `{"result":{"ok":false,"error":"..."}}`，不会把 JavaScript 异常直接抛进 AI 工具循环。
 
-私有存储要求 `permissions` 包含 `storage`，每个插件最多 256 KB，键长 1～128。数据整体以 Secure Storage 保存；Android 前台/后台宿主通过原生共享锁串行化同一插件的读写。`await tide.storage.compareAndSet(key, expected, value)` 原子比较 JSON 值并写入，返回是否成功；缺失键按 null 比较。`await tide.storage.update(key, updater)` 基于独立旧值副本计算新值，竞争失败后重新读取并重试，最多 16 次；updater 可能执行多次，应避免外部副作用。普通 get 后 set 仍是两个操作，读改写应使用 update。它适合少量配置状态，不适合大量文件或媒体。
+私有存储要求 `permissions` 包含 `storage`，每个插件最多 8 MiB（UTF-8 JSON 总量），键长 1～128。数据整体以 Secure Storage 保存；Android 前台/后台宿主通过原生共享锁串行化同一插件的读写。`await tide.storage.compareAndSet(key, expected, value)` 原子比较 JSON 值并写入，返回是否成功；缺失键按 null 比较。`await tide.storage.update(key, updater)` 基于独立旧值副本计算新值，竞争失败后重新读取并重试，最多 16 次；updater 可能执行多次，应避免外部副作用。普通 get 后 set 仍是两个操作，读改写应使用 update。单次 RPC 仍受 1 MiB 消息限制，大型键值应拆分成多个键；文件和媒体使用 `tide.files`。
 
-网络要求 `permissions` 包含 `network`，并在 `networkOrigins` 声明精确 HTTPS origin（不带路径或尾斜线）。请求格式：
+网络要求 `permissions` 包含 `network`，并在 `networkOrigins` 声明 HTTPS origin（不带路径或尾斜线）、子域名模式或 `*`。请求格式：
 
 ```js
 const response = await tide.request({
   url: 'https://api.example.com/v1/resource',
-  method: 'POST', // 默认 GET；另支持 PUT/PATCH/DELETE
+  method: 'POST', // 默认 GET；另支持 HEAD/OPTIONS/PUT/PATCH/DELETE
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({key: 'value'}) // 字符串，默认空
 });
@@ -262,7 +264,7 @@ tide.registerTool('reply', async (args, context) => {
 
 ### 10.1 能力与权限
 
-`apiVersion` 保持 1。`tide.capabilities` 是只读数组，包含 `chat.read`、`chat.send`、`media.download`、`invocation.context`、`modules.commonjs`、`resources.read`、`ui.web`、`events.chat`、`tasks`、`notifications`、`network.transfer`。使用新接口前可检查对应能力；旧宿主没有此字段时按不支持处理。
+`apiVersion` 保持 1。`tide.capabilities` 是只读数组，包含 `chat.read`、`chat.send`、`media.download`、`invocation.context`、`modules.commonjs`、`resources.read`、`ui.web`、`events.chat`、`tasks`、`notifications`、`network.transfer`、`media.requestHeaders`、`network.originPatterns`、`files`、`network.files`、`media.process`、`schema.nested`、`storage.large`、`tasks.recurring`、`workers`、`runtime.sleep`、`database`、`database.vector`、`ai`、`commands`、`events.priority`。使用新接口前可检查对应能力；旧宿主没有此字段时按不支持处理。
 
 | 权限 | 用途 |
 | --- | --- |
@@ -278,11 +280,11 @@ tide.registerTool('reply', async (args, context) => {
 | --- | --- | --- |
 | `context.chat.getContext()` | 无 | `{botId, conversationId, pluginId}` |
 | `context.chat.sendText(options)` | `{text, requestId}` | 消息回执 |
-| `context.chat.sendImage(options)` | `{url 或 resourceId, caption?, requestId}` | 消息回执 |
-| `context.chat.sendVideo(options)` | `{url 或 resourceId, caption?, duration?, requestId}` | 消息回执 |
-| `context.chat.sendAudio(options)` | `{url 或 resourceId, caption?, duration?, requestId}` | 消息回执 |
+| `context.chat.sendImage(options)` | `{url 或 resourceId, caption?, requestId, headers?, timeoutMs?}` | 消息回执 |
+| `context.chat.sendVideo(options)` | `{url 或 resourceId, caption?, duration?, requestId, headers?, timeoutMs?}` | 消息回执 |
+| `context.chat.sendAudio(options)` | `{url 或 resourceId, caption?, duration?, requestId, headers?, timeoutMs?}` | 消息回执 |
 | `context.chat.getStatus(requestId)` | 请求标识 | 消息回执或 `{status: "not_found"}` |
-| `context.media.download(options)` | `{url, kind}`，kind 为 image/video/audio | `{resourceId, kind, size, extension}` |
+| `context.media.download(options)` | `{url, kind, headers?, timeoutMs?}`，kind 为 image/video/audio/document | `{resourceId, kind, size, extension}` |
 | `context.media.release(resourceId)` | 资源标识 | 是否存在并释放 |
 
 消息回执格式：
@@ -305,17 +307,45 @@ tide.registerTool('reply', async (args, context) => {
 
 支持直接提供 url，也可先下载，再传 resourceId。二者不能同时提供。resourceId 只在产生它的这次工具调用中有效，不可跨插件、跨调用或跨会话使用。资源返回值不包含本地文件路径。
 
-所有媒体地址必须为 `networkOrigins` 中声明的精确 HTTPS origin；最多跟随 3 次重定向，每个跳转目标仍需在声明范围内。图片原站与搜索站是不同 origin，开发者必须为实际下载站点分别声明权限，不支持通配域名。普通 `tide.request` 仍不自动跟随重定向。
+所有媒体地址必须获得 `networkOrigins` 授权；支持精确 HTTPS origin、`https://*.example.com` 子域名模式，以及允许任意 HTTPS 地址的 `*`。子域名模式匹配任意层子域名，不包含根域名，端口必须匹配；根域名需要单独声明。该规则同时适用于 `tide.request`、`tide.network.transfer` 和媒体下载。媒体最多跟随 3 次重定向，每个目标都检查授权；普通网络请求不自动跟随重定向。
 
 | 类型 | 单文件上限 | 接受的文件签名 |
 | --- | --- | --- |
-| image | 10 MiB | PNG、JPEG、GIF、WebP |
-| video | 40 MiB | ISO BMFF（以 MP4 保存）、WebM |
-| audio | 20 MiB | WAV、Ogg、FLAC、AMR、ISO BMFF（以 M4A 保存）、MP3/AAC 帧头 |
+| image | 32 MiB | PNG、JPEG、GIF、WebP |
+| video | 256 MiB | ISO BMFF（以 MP4 保存）、WebM |
+| audio | 64 MiB | WAV、Ogg、FLAC、AMR、ISO BMFF（以 M4A 保存）、MP3/AAC 帧头 |
 
 宿主使用流式下载并限制实际字节数，同时检查文件头，不仅依据扩展名或 Content-Type。文件头检查不是完整解码或内容审核。拒绝 HTML 等不匹配内容。媒体下载不经过 1 MiB 文本响应通道；单次下载超时 5 分 30 秒，仍受整个工具调用 6 分钟预算约束。不要在一次调用里串行执行多个慢请求。
 
 每次调用最多同时保留 4 个临时资源，可用 release 提前释放。发送时复制为聊天持久媒体，之后释放临时资源不会删除已经发送的文件。工具调用结束时关闭下载连接并清理该调用的临时资源；插件停用、更新或实例失效时取消未完成操作，提交前再次检查生命周期。异常退出遗留的缓存遵循系统临时目录清理规则。
+
+### 下载请求头与动态 CDN
+
+`media.download` 以及直接提供 `url` 的 `sendImage/sendVideo/sendAudio/sendDocument` 接受 `headers` 字符串映射和 `timeoutMs` 正整数（最大 330000 毫秒）。可设置 `Referer`、`User-Agent`、`Cookie` 和 `Authorization`。同 origin 重定向保留请求头；跨 origin 重定向移除 `Cookie`、`Authorization`、`Proxy-Authorization` 和 `Host`，其他头继续传递。需要凭证的最终 CDN 可以由插件先取得最终地址，再直接调用下载接口。
+
+使用此能力的插件应声明：
+
+```json
+{
+  "permissions": ["network", "media.download", "chat.send"],
+  "requiredCapabilities": ["media.requestHeaders", "network.originPatterns"],
+  "networkOrigins": ["https://api.bilibili.com", "https://*.bilivideo.com"]
+}
+```
+
+解析接口返回其他 CDN 域名时，应增加对应模式；提供通用下载功能的插件可改用 `"networkOrigins": ["*"]`。配置和更新界面会展示所声明的网络范围。
+
+```js
+// 在工具处理函数内使用；args.url 是解析得到的可下载视频地址。
+await context.chat.sendVideo({
+  url: args.url,
+  requestId: args.requestId,
+  headers: {Referer: 'https://www.bilibili.com/', 'User-Agent': 'Mozilla/5.0'},
+  timeoutMs: 330000
+});
+```
+
+此接口下载完整媒体文件，不执行 DASH 音视频合并、HLS 分片下载、转码或 DRM 解密。解析器需要选择可直接播放的完整文件，或使用提供合并结果的服务。域名授权与请求头支持不代表外部服务必然接受请求。
 
 ### 10.5 完整示例
 
@@ -438,7 +468,7 @@ exports.search = async (args, context) => {
 | `tide.resources.readText(path)` | Promise<string>，严格 UTF-8 解码 |
 | `tide.resources.readJson(path)` | Promise<JSON>，读取并解析 JSON |
 
-path 是相对插件包根目录的路径，必须在 manifest.resources 中声明。单次读取最多 1 MiB，读取过程检查实际路径和符号链接，拒绝越界。资源只读，不需要额外权限。运行期间产生的数据使用 tide.storage，插件更新不会保留包内文件修改。
+path 是相对插件包根目录的路径，必须在 manifest.resources 中声明。单次读取最多 1 MiB，读取过程检查实际路径和符号链接，拒绝越界。资源只读，不需要额外权限。运行期间产生的数据使用 tide.storage 或 tide.files，插件更新不会保留包内文件修改。
 
 resources 不会自动创建媒体 resourceId；它用于文本、词库、模板和 JSON。网页图片、字体和样式以相对 URL 从网页目录加载。
 
@@ -501,3 +531,9 @@ UI 事件没有聊天调用上下文，不能凭空选择机器人发送消息�
 消息订阅、机器人范围和持久任务 API 见[消息事件与持久任务](EVENTS_AND_TASKS.md)。需要相应权限与 hook 声明，能力依赖分别为 `events.chat` 和 `tasks`。
 
 通知、可取消网络传输、PDF 文档、媒体元数据与错误分类见[宿主扩展接口](HOST_APIS.md)。
+
+## 13. 文件、媒体处理和周期任务
+
+宿主提供 `files`、`network.files`、`media.process`、`schema.nested`、`storage.large`、`tasks.recurring` 能力，可在 `requiredCapabilities` 中声明。私有文件与二进制传输、媒体合并和转码见[文件与媒体处理](FILES_AND_MEDIA.md)；周期调度和修改见[消息事件与持久任务](EVENTS_AND_TASKS.md)。
+
+常驻数据处理可通过清单 `workers` 与 `tide.registerWorker` 注册，无需聊天事件触发；`tide.sleep` 提供可取消等待。`tide.database` 提供文档集合、事务批量操作、迁移与向量检索，`tide.ai` 使用应用已配置的模型生成文本，`tide.registerCommand` 处理聊天命令。声明规则、权限、配额与运行条件见[常驻任务、AI 与文档数据库](WORKERS_AI_DATABASE.md)。
