@@ -18,6 +18,29 @@ class ToolingTests(unittest.TestCase):
             if path.is_dir() and (path / 'manifest.json').exists():
                 self.assertTrue(validate(path.resolve()))
 
+    def test_endpoint_grants(self):
+        with tempfile.TemporaryDirectory(prefix='.endpoint-test-', dir=ROOT) as folder:
+            src = Path(folder)
+            manifest = {'id': 'tidebot_endpoints', 'name': 'Endpoints', 'version': '1.0.0',
+                        'entry': 'main.js', 'permissions': ['network', 'network.sockets',
+                        'network.cleartext', 'network.local', 'credentials', 'auth.browser',
+                        'background.send', 'chat.send', 'context.inject'],
+                        'hooks': ['context.build'],
+                        'requiredCapabilities': ['network.endpoints', 'auth.oauth', 'chat.files']}
+            (src / 'main.js').write_text('')
+            for endpoint in ['tls://mail.example.com:993', 'wss://example.com',
+                             'tcp://127.0.0.1:2525', 'http://[::1]:8080']:
+                manifest['networkEndpoints'] = [endpoint]
+                (src / 'manifest.json').write_text(json.dumps(manifest))
+                self.assertTrue(validate(src))
+            for endpoint in ['tcp://host', 'http://host:0', 'tls://host:65536',
+                             'https://host/path', 'ws://*.host', 'http://user@host',
+                             'http://host?', 'https://host#']:
+                manifest['networkEndpoints'] = [endpoint]
+                (src / 'manifest.json').write_text(json.dumps(manifest))
+                with self.subTest(endpoint=endpoint), self.assertRaises(ValueError):
+                    validate(src)
+
     def test_pack_reproducible_and_failure_preserves_output(self):
         with tempfile.TemporaryDirectory(prefix='.tooling-test-', dir=ROOT) as folder:
             base = Path(folder)

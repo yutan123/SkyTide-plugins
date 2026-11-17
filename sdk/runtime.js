@@ -63,6 +63,49 @@
       }),
     });
   };
+  const tokenRefreshes = new Map();
+  const tokenRequest = async options => {
+    if (!options || typeof options.url !== 'string' || !options.url.startsWith('https://')) throw new Error('Token endpoint must use HTTPS');
+    const fields = options.fields || {};
+    if (Object.keys(fields).length > 32 || Object.values(fields).some(v => typeof v !== 'string')) throw new Error('Token fields must be strings');
+    const body = Object.keys(fields).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(fields[k])).join('&');
+    const response = await rpc('http.transfer', {requestId: 'oauth_' + (++sequence), url: options.url, method: 'POST',
+      headers: {'content-type': 'application/x-www-form-urlencoded'}, body});
+    let token;
+    try { token = JSON.parse(response.body); } catch (_) { throw new Error('Invalid OAuth token response'); }
+    if (response.status < 200 || response.status >= 300 || !token || typeof token !== 'object' || token.error || typeof token.access_token !== 'string' || !token.access_token) {
+      const error = new Error('OAuth token request failed');
+      error.code = token && typeof token.error === 'string' ? token.error : 'OAUTH_ERROR';
+      throw error;
+    }
+    const expires = Number(token.expires_in);
+    if (Number.isFinite(expires) && expires > 0) token.expiresAt = Date.now() + expires * 1000;
+    if (options.credentialKey) {
+      const previousRaw = await rpc('credentials.get', {key: options.credentialKey});
+      let previous = {};
+      if (previousRaw) { try { previous = JSON.parse(previousRaw) || {}; } catch (_) {} }
+      if (fields.grant_type === 'refresh_token' && !token.refresh_token && previous.refresh_token) token.refresh_token = previous.refresh_token;
+      await rpc('credentials.set', {key: options.credentialKey, value: JSON.stringify(token)});
+    }
+    return token;
+  };
+  const accessToken = options => {
+    if (!options || typeof options.credentialKey !== 'string') return Promise.reject(new Error('credentialKey is required'));
+    const key = options.credentialKey;
+    if (tokenRefreshes.has(key)) return tokenRefreshes.get(key);
+    const work = (async () => {
+      const raw = await rpc('credentials.get', {key});
+      if (!raw) throw new Error('No stored OAuth token');
+      const token = JSON.parse(raw);
+      if (typeof token.access_token === 'string' && (!token.expiresAt || token.expiresAt > Date.now() + 60000)) return token.access_token;
+      if (typeof token.refresh_token !== 'string') throw new Error('OAuth token expired without refresh token');
+      const refreshed = await tokenRequest({...options, fields: {...(options.fields || {}), grant_type: 'refresh_token', refresh_token: token.refresh_token}});
+      return refreshed.access_token;
+    })();
+    tokenRefreshes.set(key, work);
+    work.then(() => tokenRefreshes.delete(key), () => tokenRefreshes.delete(key));
+    return work;
+  };
   globalThis.tide = Object.freeze({
     apiVersion: 1,
     sleep: ms => rpc('runtime.sleep', {ms}),
@@ -89,7 +132,7 @@
       generate: options => rpc('ai.generate', options),
       cancel: requestId => rpc('ai.cancel', {requestId}),
     }),
-    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority']),
+    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'context.inject']),
     chat: Object.freeze({
       getContext: context => context.chat.getContext(),
       getBotInfo: context => context.chat.getBotInfo(),
@@ -153,6 +196,31 @@
       fileProgress: requestId => rpc('http.fileProgress', {requestId}),
       cancel: requestId => rpc('http.cancel', {requestId}),
       progress: requestId => rpc('http.progress', {requestId}),
+    }),
+    crypto: Object.freeze({
+      random: length => rpc('crypto.random', {length}),
+      encode: text => rpc('crypto.encode', {text}),
+      decode: (base64, options = {}) => rpc('crypto.decode', {...options, base64}),
+      digest: options => rpc('crypto.digest', options),
+      hmac: options => rpc('crypto.hmac', options),
+      encrypt: options => rpc('crypto.encrypt', options),
+      decrypt: options => rpc('crypto.decrypt', options),
+    }),
+    auth: Object.freeze({authorize: options => rpc('auth.authorize', options), createPkce: () => rpc('auth.createPkce'), exchangeToken: tokenRequest, getAccessToken: accessToken}),
+    credentials: Object.freeze({
+      get: key => rpc('credentials.get', {key}),
+      set: (key, value) => rpc('credentials.set', {key, value}),
+      delete: key => rpc('credentials.delete', {key}),
+    }),
+    background: Object.freeze({sendText: options => rpc('background.sendText', options)}),
+    connections: Object.freeze({
+      connect: options => rpc('connections.connect', options),
+      webSocket: options => rpc('connections.webSocket', options),
+      http: options => rpc('connections.http', options),
+      read: (connectionId, options = {}) => rpc('connections.read', {...options, connectionId}),
+      write: (connectionId, options) => rpc('connections.write', {...options, connectionId}),
+      startTls: connectionId => rpc('connections.startTls', {connectionId}),
+      close: connectionId => rpc('connections.close', {connectionId}),
     }),
     diagnostics: Object.freeze({getStatus: () => rpc('diagnostics.getStatus')}),
     log: message => rpc('log', {message: String(message)}),

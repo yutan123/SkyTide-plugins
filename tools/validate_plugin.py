@@ -25,12 +25,21 @@ def validate(src):
         raise ValueError('invalid semantic version')
     if m.get('apiVersion', 1) != 1:
         raise ValueError('unsupported apiVersion')
-    capabilities = {'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority'}
-    for field, allowed in [('permissions', {'workers', 'database', 'ai', 'storage', 'files', 'media.process', 'network', 'chat.read', 'chat.send', 'media.download', 'tasks', 'notifications'}), ('requiredCapabilities', capabilities), ('hooks', {'tool.before', 'tool.after', 'app.ready', 'chat.message', 'chat.sent', 'task.trigger'})]:
+    capabilities = {'chat.files', 'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'context.inject'}
+    for field, allowed in [('permissions', {'workers', 'database', 'ai', 'storage', 'files', 'media.process', 'network', 'chat.read', 'chat.send', 'media.download', 'tasks', 'notifications', 'network.sockets', 'network.cleartext', 'network.local', 'auth.browser', 'credentials', 'background.send', 'context.inject'}), ('requiredCapabilities', capabilities), ('hooks', {'context.build', 'tool.before', 'tool.after', 'app.ready', 'chat.message', 'chat.sent', 'task.trigger'})]:
         values = m.get(field, [])
         if not isinstance(values, list) or any(not isinstance(v, str) or v not in allowed for v in values):
             raise ValueError('unsupported ' + field)
 
+    endpoints = m.get('networkEndpoints', [])
+    if not isinstance(endpoints, list) or len(endpoints) > 64:
+        raise ValueError('invalid networkEndpoints')
+    for endpoint in endpoints:
+        if not isinstance(endpoint, str) or len(endpoint) > 300:
+            raise ValueError('invalid network endpoint')
+        parsed = urlsplit(endpoint)
+        if parsed.scheme not in {'http', 'https', 'ws', 'wss', 'tcp', 'tls'} or not parsed.hostname or '*' in parsed.hostname or parsed.username is not None or parsed.path or '?' in endpoint or '#' in endpoint or not 1 <= (parsed.port if parsed.port is not None else {'http':80,'https':443,'ws':80,'wss':443}.get(parsed.scheme, 0)) <= 65535:
+            raise ValueError('invalid network endpoint')
     workers = m.get('workers', [])
     if not isinstance(workers, list) or len(workers) > 8:
         raise ValueError('workers must be an array of at most 8 items')

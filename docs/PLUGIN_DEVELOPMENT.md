@@ -84,7 +84,7 @@ ui.json                可选：manifest.ui.entry 指向的 Flutter 声明式布
 }
 ```
 
-必需字段为 `id/name/version/entry`。`id` 是 6～64 位，必须以 tidebot 开头（不区分大小写），仅允许英文字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`ui` 均可省略。
+必需字段为 `id/name/version/entry`。`id` 是 6～64 位，必须以 tidebot 开头（不区分大小写），仅允许英文字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`networkEndpoints`、`ui` 均可省略。
 
 工具名须匹配 `[a-zA-Z][a-zA-Z0-9_]{0,39}`，同包内唯一，最多 32 个。AI 侧名称为 `tp_<插件ID的SHA256前16位>_<工具名>`，插件只用自己的原始工具名注册，无需计算宿主前缀。
 
@@ -515,7 +515,7 @@ tide.on('ui.action', async ({ action, values }) => {
 
 action 使用 `[a-zA-Z][a-zA-Z0-9_]{0,39}`，values 为 JSON 对象。请求与响应分别最多 64 Ki 字符，每页最多 8 个并发请求；页面等待响应最多 6 分 10 秒，业务调用仍受运行时 6 分钟预算限制。错误拒绝 Promise，由页面捕获并展示。插件应处于启用状态；停用、更新或修改配置后旧页面失效，需要重新打开。
 
-UI 事件没有聊天调用上下文，不能凭空选择机器人发送消息。涉及当前聊天的消息发送由机器人调用工具完成。
+UI 事件没有聊天调用上下文。涉及当前聊天的消息发送由机器人调用工具完成；声明独立后台投递权限后，可使用 `tide.background.sendText` 向已允许该插件的机器人发送文本。
 
 ### 12.3 网页访问规则
 
@@ -540,3 +540,7 @@ UI 事件没有聊天调用上下文，不能凭空选择机器人发送消息�
 
 ## 通用文件消息
 宿主通过 `context.chat.sendFile()` 发送任意格式附件，支持远程 URL 和当前上下文的资源引用，单文件上限 256 MiB。音频可由插件选择 `sendAudio()` 发送语音，或 `sendFile()` 发送文件卡片。`sendDocument()` 继续专用于 PDF。参数、权限、文件名及能力声明见 [HOST_APIS.md](HOST_APIS.md#通用文件发送)。
+
+## 14. 连接、账号授权与插件记忆
+
+TCP/TLS、STARTTLS、WebSocket、HTTP 流、SSE、加密、OAuth 凭据、后台文本投递及上下文扩展见[连接与账号接口](CONNECTIONS_AUTH_CONTEXT.md)。这些接口继续运行在 QuickJS，使用宿主提供的网络与存储能力。

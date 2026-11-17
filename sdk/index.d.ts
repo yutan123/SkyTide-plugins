@@ -75,7 +75,39 @@ export interface PluginDatabase {
   migrate(from: number, to: number, operations: DatabaseOperation[]): Promise<boolean>;
 }
 export interface AIOptions { requestId: string; providerId: string; model?: string; messages: {role: 'system' | 'user' | 'assistant'; content: string}[]; maxTokens?: number; temperature?: number }
+export interface ConnectionHandle {connectionId: string; secure?: boolean; protocol?: string | null}
+export interface ConnectionRead {data: string; done: boolean; timedOut?: boolean; type?: 'binary' | 'text' | 'event'; text?: string; event?: {data: string; event: string; id: string; retry?: number}}
+export interface ConnectionBody {text?: string; base64?: string}
+export interface TokenOptions {url: string; fields?: Record<string, string>; credentialKey?: string}
+export interface OAuthToken {access_token: string; refresh_token?: string; token_type?: string; expires_in?: number; expiresAt?: number; [key: string]: Json | undefined}
 export interface Tide {
+  readonly connections: {
+    connect(options: {url: string}): Promise<ConnectionHandle>;
+    webSocket(options: {url: string; headers?: Record<string, string>}): Promise<ConnectionHandle>;
+    http(options: ConnectionBody & {url: string; method?: RequestOptions['method']; headers?: Record<string, string>; format?: 'binary' | 'sse'}): Promise<ConnectionHandle & {status: number; headers: Record<string, string>}>;
+    read(connectionId: string, options?: {timeoutMs?: number}): Promise<ConnectionRead>;
+    write(connectionId: string, options: ConnectionBody): Promise<number>;
+    startTls(connectionId: string): Promise<ConnectionHandle>;
+    close(connectionId: string): Promise<boolean>;
+  };
+  readonly crypto: {
+    random(length?: number): Promise<string>;
+    encode(text: string): Promise<string>;
+    decode(base64: string, options?: {allowMalformed?: boolean}): Promise<string>;
+    digest(options: {base64: string; algorithm?: 'sha256' | 'sha512' | 'sha1' | 'md5'}): Promise<{hex: string; base64: string}>;
+    hmac(options: {base64: string; key: string; algorithm?: 'sha256' | 'sha512' | 'sha1' | 'md5'}): Promise<{hex: string; base64: string}>;
+    encrypt(options: {base64: string; key: string; aad?: string}): Promise<{base64: string; nonce: string; mac: string}>;
+    decrypt(options: {base64: string; key: string; nonce: string; mac: string; aad?: string}): Promise<string>;
+  };
+  readonly auth: {
+    authorize(options: {url: string; parameters: Record<string, string>}): Promise<{code: string; verifier: string; redirectUri: string; state: string}>;
+    createPkce(): Promise<{verifier: string; challenge: string; method: 'S256'; state: string}>;
+    exchangeToken(options: TokenOptions): Promise<OAuthToken>;
+    getAccessToken(options: TokenOptions & {credentialKey: string}): Promise<string>;
+  };
+  readonly credentials: {get(key: string): Promise<string | null>; set(key: string, value: string): Promise<null>; delete(key: string): Promise<null>};
+  readonly background: {sendText(options: {botId: string; text: string; requestId: string}): Promise<Receipt>};
+
   sleep(ms: number): Promise<void>;
   registerWorker(name: string, handler: (context: WorkerContext) => void | Promise<void>): void;
   registerCommand(name: string, handler: (args: {text: string; botId: string; messageId: string}, context: Context) => void | Promise<void>): void;
@@ -90,6 +122,7 @@ export interface Tide {
   readonly capabilities: readonly string[];
   readonly config: Readonly<Record<string, Json>>;
   registerTool(name: string, handler: (args: Record<string, Json>, context: Context) => Json | Promise<Json>): void;
+  on(event: 'context.build', handler: (payload: {botId: string; text: string}) => {context: string} | void | Promise<{context: string} | void>): void;
   on(event: 'chat.message' | 'chat.sent', handler: (payload: ChatEvent, context: Context) => void | Promise<void>): void;
   on(event: 'task.trigger', handler: (payload: TaskEvent, context: Context) => void | Promise<void>): void;
   on(event: string, handler: (payload: Json, context: Context) => Json | void | Promise<Json | void>): void;
