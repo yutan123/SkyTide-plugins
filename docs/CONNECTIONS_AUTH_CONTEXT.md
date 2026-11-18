@@ -168,3 +168,31 @@ tide.on('context.build', async ({botId, text}) => {
 多个插件并行查询，每个最多等待五秒，按插件顺序合并。单插件 context 最多 8000 字符，总计最多 24000 字符，超限项忽略。超时仅停止本轮等待，未完成的 hook 不会在下一轮重复启动，直到原调用结束。返回内容作为带插件来源的参考记忆加入模型上下文，应仅包含相关资料。
 
 内置世界书、日记及今日一言开关继续控制内置功能。关闭内置世界书不会关闭另行授权的插件数据库或 context hook；禁用插件或取消其机器人授权可停止对应注入。
+
+
+### 设置聊天提示词
+
+清单声明 `permissions: ["context.inject"]` 和 `requiredCapabilities: ["context.prompts"]`。每个插件在每个机器人下各有一个 `persistent` 槽和一个 `once` 槽。设置同一槽会覆盖原值，默认模式为 `persistent`。每条提示词最多 4000 字符。
+
+```js
+await tide.context.setPrompt({botId, prompt: '默认用简短段落回复。'});
+await tide.context.setPrompt({botId, prompt: '下一次回复使用项目符号。', mode: 'once'});
+await tide.context.clearPrompt({botId, mode: 'persistent'});
+```
+
+持续提示词随普通聊天请求发送，重启后保留。一次性提示词在下一次符合条件的聊天请求取用时移除，同一请求的模型重试复用已取出的内容。持久提示词位于可复用前缀，动态参考资料和一次性提示词放在历史之后。
+
+### 请求机器人生成消息
+
+清单在 `permissions` 和 `requiredCapabilities` 中均声明 `background.generate`。
+
+```js
+const receipt = await tide.background.requestReply({
+  botId,
+  requestId: `mail:${messageId}`,
+  prompt: '用你的语气提醒用户收到一封邮件。',
+  context: mailSummary,
+});
+```
+
+宿主使用目标机器人的模型、人设和聊天历史异步生成消息。这轮请求关闭工具，任务文本和参考资料不写入聊天记录。`prompt` 最多 4000 字符，`context` 最多 8000 字符。`accepted` 表示已受理，`delivered` 表示该请求已有消息，`busy` 表示该机器人当前正在生成另一条插件消息，可稍后重试。失败或宿主中止后可用相同 `requestId` 重试，已保存的消息会去重。

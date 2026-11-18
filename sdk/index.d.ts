@@ -142,7 +142,14 @@ export interface Tide {
     getAccessToken(options: TokenOptions & {credentialKey: string}): Promise<string>;
   };
   readonly credentials: {get(key: string): Promise<string | null>; set(key: string, value: string): Promise<null>; delete(key: string): Promise<null>};
-  readonly background: {sendText(options: {botId: string; text: string; requestId: string}): Promise<Receipt>};
+  readonly background: {
+    sendText(options: {botId: string; text: string; requestId: string}): Promise<Receipt>;
+    requestReply(options: {botId: string; requestId: string; prompt: string; context?: string}): Promise<{messageId: string; status: 'accepted' | 'delivered' | 'busy'; duplicate: boolean}>;
+  };
+  readonly context: {
+    setPrompt(options: {botId: string; prompt: string; mode?: 'persistent' | 'once'}): Promise<null>;
+    clearPrompt(options: {botId: string; mode?: 'persistent' | 'once'}): Promise<null>;
+  };
 
   sleep(ms: number): Promise<void>;
   registerWorker(name: string, handler: (context: WorkerContext) => void | Promise<void>): void;

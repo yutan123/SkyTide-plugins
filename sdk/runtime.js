@@ -139,7 +139,7 @@
       generate: options => rpc('ai.generate', options),
       cancel: requestId => rpc('ai.cancel', {requestId}),
     }),
-    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'context.inject']),
+    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'background.generate', 'context.inject', 'context.prompts']),
     chat: Object.freeze({
       getContext: context => context.chat.getContext(),
       getBotInfo: context => context.chat.getBotInfo(),
@@ -228,7 +228,14 @@
       set: (key, value) => rpc('credentials.set', {key, value}),
       delete: key => rpc('credentials.delete', {key}),
     }),
-    background: Object.freeze({sendText: options => rpc('background.sendText', options)}),
+    background: Object.freeze({
+      sendText: options => rpc('background.sendText', options),
+      requestReply: options => rpc('background.requestReply', options),
+    }),
+    context: Object.freeze({
+      setPrompt: options => rpc('context.setPrompt', options),
+      clearPrompt: options => rpc('context.clearPrompt', options),
+    }),
     connections: Object.freeze({
       connect: options => rpc('connections.connect', options),
       webSocket: options => rpc('connections.webSocket', options),
