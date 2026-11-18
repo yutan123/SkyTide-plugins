@@ -9,6 +9,16 @@
       "version": "1.0.0",
       "commit": "7854f6061032b9f8dc5fdde02bcb5c511211f095",
       "changelog": "首次发布。"
+    },
+    {
+      "id": "tidebot_mail_notify",
+      "name": "邮箱通知",
+      "author": "yutan123",
+      "description": "将邮箱接收到的邮件获取后通知",
+      "repository": "https://github.com/qq3438802170-gif/tidebot_mail_notify",
+      "version": "1.0.0",
+      "commit": "6bbe76f0eafba6fb8d2cd98b8a2d68f0bbc87d45",
+      "changelog": "首次收录。"
     }
   ],
   "revocations": []
