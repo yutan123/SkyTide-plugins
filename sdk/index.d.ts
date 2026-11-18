@@ -7,7 +7,24 @@ export interface MediaDownloadOptions { fileName?: string; url: string; kind: Me
 export interface MediaOptions { fileName?: string; headers?: Record<string, string>; timeoutMs?: number; url?: string; resourceId?: string; caption?: string; requestId: string; duration?: number }
 export interface BotInfo { id: string; name: string | null; desc: string | null; created_at: number | null }
 export interface Message { id: string; role: string; type: string; content: string | null; timestamp: number }
+export interface ChatCard {
+  requestId: string;
+  title: string;
+  body?: string;
+  prompt?: string;
+  actionLabel?: string;
+  size?: 'compact' | 'regular' | 'wide';
+  icon?: 'note' | 'task' | 'calendar' | 'star' | 'info';
+  color?: string;
+}
 export interface Chat {
+  sendCard(options: ChatCard): Promise<Receipt>;
+  readonly storage: {
+    get(key: string): Promise<Json>;
+    set(key: string, value: Json): Promise<void>;
+    delete(key: string): Promise<void>;
+    compareAndSet(key: string, expected: Json, value: Json): Promise<boolean>;
+  };
   getContext(): Promise<{botId: string; conversationId: string; pluginId: string}>;
   getBotInfo(): Promise<BotInfo | null>;
   /** Newest first, 1–100 entries; requires chat.read. */

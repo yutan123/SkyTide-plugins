@@ -402,6 +402,27 @@ tide.registerTool('send_media', async (args, context) => {
 
 可直接参考 `examples/media_sender/` 的清单与入口。发送异常会拒绝 Promise，应在工具中处理或交由宿主转换为工具错误；已经成功发送的消息不会因处理函数之后发生异常而回滚。
 
+### 聊天卡片与机器人存储
+
+在带有会话上下文的命令、工具调用或事件中，使用 `context.chat.sendCard(options)` 向当前聊天室发送卡片，并在清单中声明 `chat.send` 权限。
+
+```js
+await context.chat.sendCard({
+  requestId: `reminder-card:${messageId}`,
+  title: '交材料',
+  body: '周五晚上提交',
+  prompt: '请帮我设置周五晚上交材料的提醒',
+  actionLabel: '填写提醒',
+  size: 'regular',
+  icon: 'calendar',
+  color: '#378463',
+});
+```
+
+`requestId` 和 `title` 必填。同一插件、机器人和请求 ID 的重试会返回原消息。`size` 支持 `compact`、`regular`、`wide`，`icon` 支持 `note`、`task`、`calendar`、`star`、`info`，`color` 接受 `#RRGGBB`。提供 `prompt` 时显示操作按钮，点击后将提示词追加到输入框草稿，由用户发送。卡片样式由宿主渲染。
+
+声明 `storage` 权限后，可以通过 `context.chat.storage` 使用 `get`、`set`、`delete` 和 `compareAndSet`。宿主从会话上下文确定机器人，同一插件在不同机器人中使用相同键时会读写各自的值。旧版 `Tide.storage` 仍用于插件全局数据。机器人级存储每个插件合计上限为 8 MiB。
+
 ## 11. 多文件模块与包内资源
 
 入口文件负责注册工具和事件，业务逻辑可通过 CommonJS 模块拆分，无需先合并成一个 bundle。目录名称由插件作者决定。

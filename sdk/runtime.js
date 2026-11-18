@@ -39,6 +39,13 @@
         getRecentMessages: (options = {}) => call('chat.getRecentMessages', options),
         getUnreadCount: () => call('chat.getUnreadCount'),
         sendText: options => call('chat.sendText', options),
+        sendCard: options => call('chat.sendCard', options),
+        storage: Object.freeze({
+          get: key => call('botStorage.get', {key}),
+          set: (key, value) => call('botStorage.set', {key, value}),
+          delete: key => call('botStorage.delete', {key}),
+          compareAndSet: (key, expected, value) => call('botStorage.compareAndSet', {key, expected, value}),
+        }),
         sendImage: options => call('chat.sendImage', options),
         sendVideo: options => call('chat.sendVideo', options),
         sendAudio: options => call('chat.sendAudio', options),
