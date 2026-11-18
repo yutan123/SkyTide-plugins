@@ -2,6 +2,7 @@
 import json
 import re
 from urllib.parse import urlsplit
+from config_ui import validate_config_ui
 
 
 def validate(src):
@@ -25,11 +26,23 @@ def validate(src):
         raise ValueError('invalid semantic version')
     if m.get('apiVersion', 1) != 1:
         raise ValueError('unsupported apiVersion')
-    capabilities = {'chat.files', 'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'context.inject'}
+    capabilities = {'chat.files', 'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'context.inject'}
     for field, allowed in [('permissions', {'workers', 'database', 'ai', 'storage', 'files', 'media.process', 'network', 'chat.read', 'chat.send', 'media.download', 'tasks', 'notifications', 'network.sockets', 'network.cleartext', 'network.local', 'auth.browser', 'credentials', 'background.send', 'context.inject'}), ('requiredCapabilities', capabilities), ('hooks', {'context.build', 'tool.before', 'tool.after', 'app.ready', 'chat.message', 'chat.sent', 'task.trigger'})]:
         values = m.get(field, [])
         if not isinstance(values, list) or any(not isinstance(v, str) or v not in allowed for v in values):
             raise ValueError('unsupported ' + field)
+
+    if 'systemPermissions' in m:
+        values = m['systemPermissions']
+        allowed = {'overlay', 'location', 'microphone', 'photos', 'videos', 'motion'}
+        if not isinstance(values, list) or any(not isinstance(v, str) or v not in allowed for v in values):
+            raise ValueError('unsupported systemPermissions')
+
+    config = m.get('config')
+    if config is None and (src / 'config.schema.json').is_file():
+        config = json.loads((src / 'config.schema.json').read_text(encoding='utf-8'))
+    if config is not None:
+        validate_config_ui(config)
 
     endpoints = m.get('networkEndpoints', [])
     if not isinstance(endpoints, list) or len(endpoints) > 64:

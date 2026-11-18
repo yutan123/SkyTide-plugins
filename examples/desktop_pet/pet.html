@@ -1,0 +1,22 @@
+<style>
+html, body { margin: 0; height: 100%; background: transparent; }
+body { display: grid; place-items: center; }
+button { background: transparent; border: 0; padding: 0; width: 96px; height: 108px; color: white; font: 600 12px sans-serif; cursor: pointer; }
+img { width: 80px; height: 80px; display: block; margin: 0 auto; }
+output { display: block; background: #153831; border-radius: 12px; width: 52px; margin: 2px auto 0; line-height: 18px; }
+@keyframes bounce { 50% { transform: translateY(-8px); } }
+img.pop { animation: bounce .25s ease-out; }
+@media (prefers-reduced-motion: reduce) { img.pop { animation: none; } }
+</style>
+<button aria-label="抚摸桌宠"><img alt=""><output>0</output></button>
+<script>
+const pet = document.querySelector('img');
+pet.src = TideOverlay.asset('pet.svg');
+document.querySelector('button').onclick = () => TideOverlay.postMessage({type: 'pet'});
+window.addEventListener('tideoverlayupdate', ({detail}) => {
+  document.querySelector('output').value = detail.taps;
+  pet.classList.remove('pop');
+  void pet.offsetWidth;
+  pet.classList.add('pop');
+});
+</script>

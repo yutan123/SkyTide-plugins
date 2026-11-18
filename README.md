@@ -32,3 +32,6 @@ python3 tools/pack_plugin.py <插件目录> --out <输出文件.zip>
 提交市场审核时，开发者只需要提供公开插件仓库地址、审核提交的完整 commit SHA 和市场信息；是否使用这个工具生成 ZIP 不影响审核。
 
 应用宿主与内置运行时由 [TideBot](https://github.com/yutan123/TideBot) 维护。
+
+- [插件设置表单与动态选择器](docs/CONFIGURATION.md)
+- [Android 系统权限与悬浮窗](docs/ANDROID_DEVICE.md)

@@ -13,6 +13,35 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ToolingTests(unittest.TestCase):
+    def test_configuration_metadata(self):
+        from config_ui import validate_config_ui
+        for kind in ('provider', 'bot'):
+            for multiple in (False, True):
+                field = {'type': 'array' if multiple else 'string', 'x-ui': {'widget': kind}}
+                if multiple:
+                    field['items'] = {'type': 'string'}
+                validate_config_ui({'type': 'object', 'properties': {'selected': field}})
+        for field in (
+            {'type': 'string', 'x-ui': None},
+            {'type': 'string', 'enum': ['a'], 'x-ui': {'widget': 'file'}},
+            {'type': 'integer', 'x-ui': {'widget': 'bot'}},
+            {'type': 'string', 'x-ui': {'widget': 'provider', 'providerTypes': ['chat', 'chat']}},
+            {'type': 'string', 'x-ui': {'widget': 'provider', 'providerTypes': ['unknown']}},
+            {'type': 'string', 'format': 'password', 'x-ui': {'widget': 'multiline'}},
+            {'type': 'integer', 'minimum': 0.5, 'maximum': 10.5, 'x-ui': {'widget': 'slider'}},
+            {'type': 'integer', 'minimum': 0, 'maximum': 10001, 'x-ui': {'widget': 'slider'}},
+            {'type': 'number', 'minimum': 0, 'maximum': 1, 'x-ui': {'widget': 'slider', 'step': 0.3}},
+            {'type': 'string', 'x-ui': {'widget': 'file', 'extensions': ['.pem']}},
+            {'type': 'string', 'x-ui': {'visibleWhen': {'missing': True}}},
+        ):
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                validate_config_ui({'type': 'object', 'properties': {'selected': field}})
+        with self.assertRaises(ValueError):
+            validate_config_ui({'type': 'object', 'properties': {
+                'a': {'type': 'boolean', 'x-ui': {'visibleWhen': {'b': True}}},
+                'b': {'type': 'boolean', 'x-ui': {'visibleWhen': {'a': True}}},
+            }})
+
     def test_examples(self):
         for path in (ROOT / 'examples').iterdir():
             if path.is_dir() and (path / 'manifest.json').exists():

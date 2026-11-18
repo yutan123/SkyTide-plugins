@@ -132,7 +132,7 @@
       generate: options => rpc('ai.generate', options),
       cancel: requestId => rpc('ai.cancel', {requestId}),
     }),
-    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'context.inject']),
+    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'context.inject']),
     chat: Object.freeze({
       getContext: context => context.chat.getContext(),
       getBotInfo: context => context.chat.getBotInfo(),
@@ -187,6 +187,15 @@
       delete: path => rpc('files.delete', {path}),
     }),
     resources: Object.freeze({readText: path => rpc('resources.readText', {path}), readJson: path => rpc('resources.readJson', {path})}),
+    device: Object.freeze({
+      hasPermission: permission => rpc('device.permission', {permission}),
+      getLocation: () => rpc('device.location'),
+      getMotion: () => rpc('device.motion'),
+    }),
+    overlay: Object.freeze({
+      update: data => rpc('overlay.update', {data}),
+      close: () => rpc('overlay.close'),
+    }),
     request: options => rpc('http.request', options),
     network: Object.freeze({
       transfer: options => rpc('http.transfer', options),
@@ -258,9 +267,19 @@
         const wrapped = payload && payload.__tideInvocation === true;
         return await handler(wrapped ? payload.args : payload, scoped(wrapped ? payload.contextToken : null));
       }
+      const deviceToken = name === 'ui.action' && payload && payload.__tideDeviceAction;
       const eventWrapped = payload && payload.__tideEvent === true;
-      const eventContext = scoped(eventWrapped ? payload.contextToken : null);
-      let result = eventWrapped ? payload.payload : payload;
+      const baseContext = scoped(eventWrapped ? payload.contextToken : null);
+      const eventContext = deviceToken ? Object.freeze({
+        ...baseContext,
+        overlay: Object.freeze({show: options => rpc('overlay.show', {...options, actionToken: deviceToken})}),
+        device: Object.freeze({
+          pickPhoto: (options = {}) => rpc('device.photos', {...options, actionToken: deviceToken}),
+          pickVideo: (options = {}) => rpc('device.videos', {...options, actionToken: deviceToken}),
+          recordAudio: (durationMs = 2000) => rpc('device.microphone', {durationMs, actionToken: deviceToken}),
+        }),
+      }) : baseContext;
+      let result = eventWrapped || deviceToken ? payload.payload : payload;
       for (const handler of events.get(name) || []) {
         const next = await handler(result, eventContext);
         if (next !== undefined) result = next;

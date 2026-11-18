@@ -1,0 +1,7 @@
+{
+  "type": "column",
+  "children": [
+    {"type": "button", "label": "打开桌宠", "action": "open"},
+    {"type": "button", "label": "关闭桌宠", "action": "close"}
+  ]
+}

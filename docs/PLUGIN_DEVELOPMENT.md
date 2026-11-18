@@ -96,6 +96,8 @@ SDK v1 实现的是明确限定的 JSON Schema 子集：根节点必须为 `type
 
 设置表单中，字符串使用文本框，`format: password` 隐藏输入，布尔使用开关，数字使用数字输入，标量枚举使用下拉，数组和对象使用多行 JSON 编辑器。保存保留 JSON 类型；插件启动及工具调用前重复校验，避免绕过界面的非法值。`required` 检查字段存在；若需要拒绝空字符串，应在插件逻辑中明确检查。默认值用于缺省字段，不会自动写入所有持久配置。
 
+动态提供商／机器人选择器、条件显示、分组以及文件、日期等控件见[插件设置表单](CONFIGURATION.md)。
+
 内联 `manifest.config` 优先于 `config.schema.json`。安装时将独立文件内容规范化进保存的清单。配置使用 Flutter Secure Storage，不向插件暴露其他插件的配置。`tide.config` 在每次启动时取得快照，修改设置后重启生效。
 
 ## 5. 宿主 JavaScript API

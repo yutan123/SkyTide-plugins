@@ -80,7 +80,26 @@ export interface ConnectionRead {data: string; done: boolean; timedOut?: boolean
 export interface ConnectionBody {text?: string; base64?: string}
 export interface TokenOptions {url: string; fields?: Record<string, string>; credentialKey?: string}
 export interface OAuthToken {access_token: string; refresh_token?: string; token_type?: string; expires_in?: number; expiresAt?: number; [key: string]: Json | undefined}
+export type DevicePermission = 'overlay' | 'location' | 'microphone' | 'photos' | 'videos' | 'motion';
+export type OverlayOptions = { width?: number; height?: number; compact?: boolean; assetPaths?: string[] } &
+  ({ html: string; entry?: never } | { entry: string; html?: never });
+export type PickedMedia = { name: string; mimeType: string | null } &
+  ({ base64: string } | { path: string; size: number });
+export interface UiActionContext extends Context {
+  readonly overlay: { show(options: OverlayOptions): Promise<boolean> };
+  readonly device: {
+    pickPhoto(options?: { path?: string }): Promise<PickedMedia | null>;
+    pickVideo(options?: { path?: string }): Promise<PickedMedia | null>;
+    recordAudio(durationMs?: number): Promise<{ mimeType: 'audio/mp4'; base64: string }>;
+  };
+}
 export interface Tide {
+  readonly device: {
+    hasPermission(permission: DevicePermission): Promise<boolean>;
+    getLocation(): Promise<{ latitude: number; longitude: number; accuracy: number; timestamp: number } | null>;
+    getMotion(): Promise<{ screenRotation: number; acceleration?: number[]; angularVelocity?: number[]; rotationVector?: number[] }>;
+  };
+  readonly overlay: { update(data: Json): Promise<boolean>; close(): Promise<null> };
   readonly connections: {
     connect(options: {url: string}): Promise<ConnectionHandle>;
     webSocket(options: {url: string; headers?: Record<string, string>}): Promise<ConnectionHandle>;
@@ -122,6 +141,8 @@ export interface Tide {
   readonly capabilities: readonly string[];
   readonly config: Readonly<Record<string, Json>>;
   registerTool(name: string, handler: (args: Record<string, Json>, context: Context) => Json | Promise<Json>): void;
+  on(event: 'ui.action', handler: (payload: {action: string; values: Record<string, Json>}, context: UiActionContext) => Json | void | Promise<Json | void>): void;
+  on(event: 'overlay.message', handler: (payload: {data: Json}) => void | Promise<void>): void;
   on(event: 'context.build', handler: (payload: {botId: string; text: string}) => {context: string} | void | Promise<{context: string} | void>): void;
   on(event: 'chat.message' | 'chat.sent', handler: (payload: ChatEvent, context: Context) => void | Promise<void>): void;
   on(event: 'task.trigger', handler: (payload: TaskEvent, context: Context) => void | Promise<void>): void;
@@ -168,3 +189,39 @@ export interface Tide {
   };
 }
 declare global { const tide: Tide; }
+
+/** Configuration form metadata. Requires the config.ui host capability. */
+export interface ConfigFieldUi {
+  widget?: 'provider' | 'bot' | 'multiline' | 'file' | 'directory' | 'date' | 'time' | 'timezone' | 'slider';
+  group?: string;
+  collapsed?: boolean;
+  visibleWhen?: Record<string, Json>;
+  providerTypes?: Array<'chat' | 'stt' | 'tts'>;
+  unit?: string;
+  rows?: number;
+  step?: number;
+  extensions?: string[];
+  /** Root object only; dispatched as ui.action with unsaved values. */
+  testAction?: string;
+  testLabel?: string;
+}
+export interface ConfigSchema {
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
+  title?: string;
+  description?: string;
+  format?: string;
+  default?: Json;
+  enum?: Json[];
+  properties?: Record<string, ConfigSchema>;
+  items?: ConfigSchema;
+  required?: string[];
+  additionalProperties?: boolean;
+  minimum?: number;
+  maximum?: number;
+  minLength?: number;
+  maxLength?: number;
+  minItems?: number;
+  maxItems?: number;
+  'x-ui'?: ConfigFieldUi;
+}
+export interface ConfigTestResult { ok: boolean }

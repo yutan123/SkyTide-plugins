@@ -1,0 +1,178 @@
+{
+  "apiVersion": 1,
+  "id": "tidebot.example.config_form",
+  "name": "设置表单示例",
+  "version": "1.0.0",
+  "description": "动态选择器、分组、条件显示及各类配置控件",
+  "author": "TideBot",
+  "entry": "main.js",
+  "permissions": [
+    "files",
+    "network"
+  ],
+  "networkOrigins": [
+    "https://example.com"
+  ],
+  "requiredCapabilities": [
+    "config.ui"
+  ],
+  "config": {
+    "type": "object",
+    "x-ui": {
+      "testAction": "test_connection"
+    },
+    "properties": {
+      "endpoint": {
+        "type": "string",
+        "title": "服务地址",
+        "default": "https://example.com",
+        "x-ui": {
+          "group": "连接"
+        }
+      },
+      "password": {
+        "type": "string",
+        "title": "访问密码",
+        "format": "password",
+        "x-ui": {
+          "group": "连接"
+        }
+      },
+      "interval": {
+        "type": "integer",
+        "title": "检查间隔",
+        "default": 15,
+        "minimum": 5,
+        "maximum": 60,
+        "x-ui": {
+          "widget": "slider",
+          "step": 5,
+          "unit": "分钟",
+          "group": "连接"
+        }
+      },
+      "bot": {
+        "type": "string",
+        "title": "默认机器人",
+        "x-ui": {
+          "widget": "bot",
+          "group": "机器人"
+        }
+      },
+      "bots": {
+        "type": "array",
+        "title": "通知机器人",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 10,
+        "x-ui": {
+          "widget": "bot",
+          "group": "机器人"
+        }
+      },
+      "summaryEnabled": {
+        "type": "boolean",
+        "title": "启用摘要",
+        "default": false,
+        "x-ui": {
+          "group": "模型"
+        }
+      },
+      "provider": {
+        "type": "string",
+        "title": "摘要提供商",
+        "x-ui": {
+          "widget": "provider",
+          "providerTypes": [
+            "chat"
+          ],
+          "group": "模型",
+          "visibleWhen": {
+            "summaryEnabled": true
+          }
+        }
+      },
+      "providers": {
+        "type": "array",
+        "title": "备用提供商（全部用途）",
+        "items": {
+          "type": "string"
+        },
+        "x-ui": {
+          "widget": "provider",
+          "providerTypes": [
+            "chat",
+            "stt",
+            "tts"
+          ],
+          "group": "模型"
+        }
+      },
+      "prompt": {
+        "type": "string",
+        "title": "摘要提示词",
+        "default": "请简洁地总结内容。",
+        "x-ui": {
+          "widget": "multiline",
+          "rows": 4,
+          "group": "模型",
+          "visibleWhen": {
+            "summaryEnabled": true
+          }
+        }
+      },
+      "certificate": {
+        "type": "string",
+        "title": "证书文件",
+        "x-ui": {
+          "widget": "file",
+          "extensions": [
+            "pem",
+            "crt"
+          ],
+          "group": "文件",
+          "collapsed": true
+        }
+      },
+      "directory": {
+        "type": "string",
+        "title": "附件目录",
+        "x-ui": {
+          "widget": "directory",
+          "group": "文件",
+          "collapsed": true
+        }
+      },
+      "date": {
+        "type": "string",
+        "title": "开始日期",
+        "x-ui": {
+          "widget": "date",
+          "group": "时间"
+        }
+      },
+      "time": {
+        "type": "string",
+        "title": "通知时间",
+        "x-ui": {
+          "widget": "time",
+          "group": "时间"
+        }
+      },
+      "timezone": {
+        "type": "string",
+        "title": "时区",
+        "default": "Asia/Shanghai",
+        "x-ui": {
+          "widget": "timezone",
+          "group": "时间"
+        }
+      }
+    },
+    "required": [
+      "provider"
+    ]
+  },
+  "tools": []
+}
