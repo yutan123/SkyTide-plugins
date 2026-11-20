@@ -15,9 +15,9 @@
       "name": "邮箱通知",
       "author": "yutan123",
       "description": "将邮箱接收到的邮件获取后通知",
-      "repository": "https://github.com/qq3438802170-gif/tidebot_mail_notify",
+      "repository": "https://github.com/qq3438802170-gif/skytide_mail_notify",
       "version": "1.0.0",
-      "commit": "6bbe76f0eafba6fb8d2cd98b8a2d68f0bbc87d45",
+      "commit": "c378b746944547e63e8c49e7de48690172abc62d",
       "icon": "icon.png",
       "changelog": "首次收录。"
     }
