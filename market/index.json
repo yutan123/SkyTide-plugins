@@ -6,8 +6,8 @@
       "author": "yutan123",
       "description": "从表情站搜索并发送表情包图片，免费免密钥搜索",
       "repository": "https://github.com/qq3438802170-gif/skytide_meme_search",
-      "version": "1.0.1",
-      "commit": "1d1d8c1c21faddc7ac7e4e8f894b55ec736396a9",
+      "version": "1.0.2",
+      "commit": "b48eac0ee2c7e87dc08dc57e571a52d30ff5a5d8",
       "changelog": "优化了已知问题"
     },
     {
