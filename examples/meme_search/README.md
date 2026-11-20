@@ -1,10 +1,10 @@
 # 联网表情包搜索
 
-作者：yutan123 · 版本：1.0.0 · TideBot SDK v1
+作者：yutan123 · 版本：1.0.0 · SkyTide SDK v1
 
 ## 安装
 
-在 TideBot「侧边栏 → 插件 → 导入」选择本 ZIP，然后启用。无需配置、账号、API Key 或插件界面。
+在 SkyTide「侧边栏 → 插件 → 导入」选择本 ZIP，然后启用。无需配置、账号、API Key 或插件界面。
 
 ## 使用
 

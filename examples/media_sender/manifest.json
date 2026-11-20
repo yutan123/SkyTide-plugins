@@ -1,6 +1,6 @@
 {
   "apiVersion": 1,
-  "id": "tidebot.media_sender",
+  "id": "skytide.media_sender",
   "name": "媒体发送示例",
   "version": "1.0.0",
   "author": "author",

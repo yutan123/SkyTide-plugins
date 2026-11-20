@@ -1,10 +1,10 @@
 {
   "apiVersion": 1,
-  "id": "tidebot.example.config_form",
+  "id": "skytide.example.config_form",
   "name": "设置表单示例",
   "version": "1.0.0",
   "description": "动态选择器、分组、条件显示及各类配置控件",
-  "author": "TideBot",
+  "author": "SkyTide",
   "entry": "main.js",
   "permissions": [
     "files",

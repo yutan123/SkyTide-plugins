@@ -11,10 +11,10 @@ npm install --save-dev ./sdk
 项目的 `tsconfig.json` 加入：
 
 ```json
-{"compilerOptions":{"types":["@tidebot/plugin-sdk"],"strict":true,"target":"ES2020"}}
+{"compilerOptions":{"types":["@skytide/plugin-sdk"],"strict":true,"target":"ES2020"}}
 ```
 
-运行时由 TideBot 注入全局 `tide`，插件无需导入 JavaScript SDK。`sdk/runtime.js` 用于 Node 测试，不能替代宿主权限校验。Mock 只运行受信任的开发代码。
+运行时由 SkyTide 注入全局 `tide`，插件无需导入 JavaScript SDK。`sdk/runtime.js` 用于 Node 测试，不能替代宿主权限校验。Mock 只运行受信任的开发代码。
 
 ```js
 const {createMock} = require('../sdk/mock.cjs');

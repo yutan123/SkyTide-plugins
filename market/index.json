@@ -1,17 +1,17 @@
 {
   "plugins": [
     {
-      "id": "tidebot_meme_search",
+      "id": "skytide_meme_search",
       "name": "表情包联网搜索",
       "author": "yutan123",
       "description": "从表情站搜索并发送表情包图片，免费免密钥搜索",
-      "repository": "https://github.com/qq3438802170-gif/tidebot_meme_search",
-      "version": "1.0.0",
-      "commit": "7854f6061032b9f8dc5fdde02bcb5c511211f095",
-      "changelog": "首次发布。"
+      "repository": "https://github.com/qq3438802170-gif/skytide_meme_search",
+      "version": "1.0.1",
+      "commit": "1d1d8c1c21faddc7ac7e4e8f894b55ec736396a9",
+      "changelog": "优化了已知问题"
     },
     {
-      "id": "tidebot_mail_notify",
+      "id": "skytide_mail_notify",
       "name": "邮箱通知",
       "author": "yutan123",
       "description": "将邮箱接收到的邮件获取后通知",

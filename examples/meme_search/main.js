@@ -1,4 +1,4 @@
-/* TideBot SDK v1 / author: yutan123. No DOM, fetch, timers or Node APIs. */
+/* SkyTide SDK v1 / author: yutan123. No DOM, fetch, timers or Node APIs. */
 (function () {
   'use strict';
   function decode(s) {

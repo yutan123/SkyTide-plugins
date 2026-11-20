@@ -6,7 +6,7 @@
 
 ```json
 {
-  "id": "tidebot_data_worker",
+  "id": "skytide_data_worker",
   "name": "数据工作台",
   "version": "1.0.0",
   "apiVersion": 1,

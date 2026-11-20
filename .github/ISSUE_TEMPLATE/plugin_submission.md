@@ -18,11 +18,11 @@ labels: ''
 
 ```json
 {
-  "id": "tidebot_example",
+  "id": "skytide_example",
   "name": "插件名称",
   "author": "作者名称",
   "description": "插件功能简介",
-  "repository": "https://github.com/owner/tidebot_example",
+  "repository": "https://github.com/owner/skytide_example",
   "version": "1.0.0",
   "commit": "填写本次审核提交的完整40位SHA",
   "changelog": "本次版本变更说明"

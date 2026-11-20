@@ -50,7 +50,7 @@ class ToolingTests(unittest.TestCase):
     def test_endpoint_grants(self):
         with tempfile.TemporaryDirectory(prefix='.endpoint-test-', dir=ROOT) as folder:
             src = Path(folder)
-            manifest = {'id': 'tidebot_endpoints', 'name': 'Endpoints', 'version': '1.0.0',
+            manifest = {'id': 'skytide_endpoints', 'name': 'Endpoints', 'version': '1.0.0',
                         'entry': 'main.js', 'permissions': ['network', 'network.sockets',
                         'network.cleartext', 'network.local', 'credentials', 'auth.browser',
                         'background.send', 'chat.send', 'context.inject'],
@@ -75,7 +75,7 @@ class ToolingTests(unittest.TestCase):
             base = Path(folder)
             src = base / 'sample'
             src.mkdir()
-            manifest = {'id': 'tidebot_test_sample', 'name': 'Sample', 'version': '1.0.0',
+            manifest = {'id': 'skytide_test_sample', 'name': 'Sample', 'version': '1.0.0',
                         'entry': 'main.js', 'permissions': ['tasks', 'notifications', 'files', 'media.process'],
                         'hooks': ['task.trigger', 'chat.message'],
                         'requiredCapabilities': ['events.chat', 'tasks', 'network.transfer',

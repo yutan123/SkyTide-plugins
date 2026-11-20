@@ -1,13 +1,13 @@
 # 插件仓库与市场提交指南
 
-开发者在自己的公开 GitHub 仓库维护插件，通过 [TideBot-plugins Issues](https://github.com/yutan123/TideBot-plugins/issues/new) 申请收录或更新。市场维护者逐版本审核，将批准版本加入索引。APP 从审核通过的完整提交下载 GitHub 自动生成的 ZIP；不需要发布 Release 附件。
+开发者在自己的公开 GitHub 仓库维护插件，通过 [SkyTide-plugins Issues](https://github.com/yutan123/TideBot-plugins/issues/new) 申请收录或更新。市场维护者逐版本审核，将批准版本加入索引。APP 从审核通过的完整提交下载 GitHub 自动生成的 ZIP；不需要发布 Release 附件。
 
 ## 仓库结构
 
 一个仓库对应一个插件，运行文件直接放在仓库根目录：
 
 ```text
-tidebot_meme_search/
+skytide_meme_search/
 ├── manifest.json       必需：运行清单
 ├── main.js             必需：manifest.entry 指定的实际入口，可改名
 ├── README.md           必需：用途、配置、权限、使用方法
@@ -26,7 +26,7 @@ tidebot_meme_search/
 ```json
 {
   "apiVersion": 1,
-  "id": "tidebot_meme_search",
+  "id": "skytide_meme_search",
   "name": "表情包搜索",
   "author": "你的名字",
   "description": "搜索表情包。",
@@ -48,7 +48,7 @@ tidebot_meme_search/
 
 ## 插件 ID 和版本
 
-ID 必须以 `tidebot` 开头，不区分大小写；总长度 6～64，只允许英文字母、数字、`.`、`_`、`-`。例如 `tidebot_meme_search`、`tidebot.meme.search`、`tidebot.meme_search`、`TideBot_Meme_Search`。不得使用斜杠、空格或中文。建议统一小写并采用独有名称，避免与其他插件冲突。
+ID 必须以 `skytide` 开头，不区分大小写；总长度 6～64，只允许英文字母、数字、`.`、`_`、`-`。例如 `skytide_meme_search`、`skytide.meme.search`、`skytide.meme_search`、`SkyTide_Meme_Search`。不得使用斜杠、空格或中文。建议统一小写并采用独有名称，避免与其他插件冲突。
 
 发布后不要改变 ID，包括大小写。前缀的大小写兼容不代表不同拼写会自动合并成同一个插件。旧 ID 改为新 ID 会被视为另一个插件，配置和私有数据不会自动迁移。新安装与更新包都需要符合前缀规则。
 
@@ -56,7 +56,7 @@ ID 必须以 `tidebot` 开头，不区分大小写；总长度 6～64，只允�
 
 ## 上传到 GitHub
 
-1. 登录 GitHub，选择 **New repository**，输入仓库名，例如 `tidebot_meme_search`，可见性选择 **Public**，创建仓库。
+1. 登录 GitHub，选择 **New repository**，输入仓库名，例如 `skytide_meme_search`，可见性选择 **Public**，创建仓库。
 2. 在仓库页面选择 **Add file → Upload files**；空仓库可选择 **uploading an existing file**。
 3. 上传插件目录里面的文件，确保仓库首页直接能看到 `manifest.json` 和入口文件，不要再套一层插件文件夹。保留模块和资源自身的相对目录结构。
 4. 填写提交说明，选择 **Commit changes**。以后修改文件也需要提交。
@@ -70,11 +70,11 @@ ID 必须以 `tidebot` 开头，不区分大小写；总长度 6～64，只允�
 
 ```json
 {
-  "id": "tidebot_meme_search",
+  "id": "skytide_meme_search",
   "name": "表情包搜索",
   "author": "你的名字",
   "description": "搜索并发送表情包。",
-  "repository": "https://github.com/your-name/tidebot_meme_search",
+  "repository": "https://github.com/your-name/skytide_meme_search",
   "version": "1.0.0",
   "commit": "0123456789abcdef0123456789abcdef01234567",
   "changelog": "首次发布。"
@@ -89,7 +89,7 @@ ID 必须以 `tidebot` 开头，不区分大小写；总长度 6～64，只允�
 ## 提交市场审核
 
 1. 打开 [新建 Issue](https://github.com/yutan123/TideBot-plugins/issues/new)。
-2. 标题填写 `[插件收录] tidebot_meme_search 1.0.0`；申请新版本时填写 `[插件更新] tidebot_meme_search 1.0.1`。
+2. 标题填写 `[插件收录] skytide_meme_search 1.0.0`；申请新版本时填写 `[插件更新] skytide_meme_search 1.0.1`。
 3. 正文粘贴填好的完整 JSON，并附上功能说明、配置方法、所需权限与网络域名、测试步骤和结果。涉及外部服务时说明账号或费用要求，不要公开真实密钥。
 4. 选择 **Submit new issue**。按审核反馈修改代码后，在原 Issue 中提供新的完整提交哈希及对应版本，避免让审核者猜测审核目标。
 

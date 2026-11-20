@@ -1,4 +1,4 @@
-// TideBot JavaScript SDK, API version 1.
+// SkyTide JavaScript SDK, API version 1.
 (() => {
   'use strict';
   const tools = new Map(), workers = new Map(), commands = new Map(), events = new Map(), pending = new Map();

@@ -1,8 +1,8 @@
 {
-  "name": "@tidebot/plugin-sdk",
+  "name": "@skytide/plugin-sdk",
   "version": "1.0.0",
   "private": true,
-  "description": "TideBot plugin development types",
+  "description": "SkyTide plugin development types",
   "types": "index.d.ts",
   "scripts": {
     "test": "node --test *.test.cjs"

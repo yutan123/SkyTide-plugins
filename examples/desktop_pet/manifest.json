@@ -1,6 +1,6 @@
 {
   "apiVersion": 1,
-  "id": "tidebot.example.desktop_pet",
+  "id": "skytide.example.desktop_pet",
   "name": "桌宠示例",
   "version": "1.0.0",
   "entry": "main.js",

@@ -15,7 +15,7 @@ from validate_plugin import validate
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Pack a TideBot plugin directory into a ZIP.')
+    parser = argparse.ArgumentParser(description='Pack a SkyTide plugin directory into a ZIP.')
     parser.add_argument('dir', help='Plugin source directory containing manifest.json')
     parser.add_argument('--out', help='Output path (default: <dir>.zip)')
     parser.add_argument('--check', action='store_true', help='Validate without writing an archive')

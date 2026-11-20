@@ -1,10 +1,10 @@
 {
   "apiVersion": 1,
-  "id": "tidebot.example.hello",
+  "id": "skytide.example.hello",
   "name": "Hello 示例",
   "version": "1.0.0",
   "description": "展示工具、配置、存储、UI 和 Hook 的最小参考插件",
-  "author": "TideBot",
+  "author": "SkyTide",
   "entry": "main.js",
   "permissions": ["storage"],
   "config": {
