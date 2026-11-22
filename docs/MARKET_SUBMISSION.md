@@ -9,7 +9,7 @@
 ```text
 skytide_meme_search/
 ├── manifest.json       必需：运行清单
-├── main.js             必需：manifest.entry 指定的实际入口，可改名
+├── main.js             脚本插件必需：manifest.entry 指定的入口，可改名
 ├── README.md           必需：用途、配置、权限、使用方法
 ├── LICENSE             可选：代码使用许可
 ├── market.json         市场申请必需：不含 commit 的市场信息
@@ -19,9 +19,9 @@ skytide_meme_search/
 └── lib/                可选：包内模块及资源
 ```
 
-入口及其依赖必须提交完整；TypeScript 和 npm 依赖应先编译或打包，并将可运行产物提交到同一个审核提交。APP 不会执行 npm install 或构建脚本。不要上传密钥、用户数据、node_modules、缓存或生成的安装包。模块、资源和界面的声明方式见[开发指南](PLUGIN_DEVELOPMENT.md)。
+仅提供[启动动画](LAUNCH_ANIMATION.md)的插件不需要入口文件，但必须提交清单对应的动画素材。脚本插件的入口及其依赖必须提交完整；TypeScript 和 npm 依赖应先编译或打包，并将可运行产物提交到同一个审核提交。APP 不会执行 npm install 或构建脚本。不要上传密钥、用户数据、node_modules、缓存或生成的安装包。模块、资源和界面的声明方式见[开发指南](PLUGIN_DEVELOPMENT.md)。
 
-最小运行清单示例：
+最小脚本插件清单示例：
 
 ```json
 {
@@ -58,7 +58,7 @@ ID 必须以 `skytide` 开头，不区分大小写；总长度 6～64，只允�
 
 1. 登录 GitHub，选择 **New repository**，输入仓库名，例如 `skytide_meme_search`，可见性选择 **Public**，创建仓库。
 2. 在仓库页面选择 **Add file → Upload files**；空仓库可选择 **uploading an existing file**。
-3. 上传插件目录里面的文件，确保仓库首页直接能看到 `manifest.json` 和入口文件，不要再套一层插件文件夹。保留模块和资源自身的相对目录结构。
+3. 上传插件目录里面的文件，确保仓库首页直接能看到 `manifest.json`，脚本插件也应包含清单所指的入口，不要再套一层插件文件夹。保留模块和资源自身的相对目录结构。
 4. 填写提交说明，选择 **Commit changes**。以后修改文件也需要提交。
 5. 打开仓库最新提交记录，进入本次准备审核的提交，复制完整的 40 位 commit SHA。不要使用短哈希、分支名或标签代替。
 

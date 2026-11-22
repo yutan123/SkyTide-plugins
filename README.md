@@ -1,8 +1,9 @@
 # SkyTide 插件
 
-SkyTide 插件使用 JavaScript 编写，由应用内置运行时执行，以普通 `.zip` 文件分发。应用无需安装额外语言运行环境。
+SkyTide 插件以普通 `.zip` 文件分发。脚本插件使用 JavaScript，由应用内置运行时执行；仅提供启动动画的插件只需清单和素材。
 
 - [开发指南与 API](docs/PLUGIN_DEVELOPMENT.md)
+- [应用内启动动画接口与示例](docs/LAUNCH_ANIMATION.md)
 - [消息事件与持久任务](docs/EVENTS_AND_TASKS.md)
 - [常驻任务、AI 与文档数据库](docs/WORKERS_AI_DATABASE.md)
 - [私有文件与媒体处理](docs/FILES_AND_MEDIA.md)

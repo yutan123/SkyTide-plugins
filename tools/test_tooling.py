@@ -47,6 +47,51 @@ class ToolingTests(unittest.TestCase):
             if path.is_dir() and (path / 'manifest.json').exists():
                 self.assertTrue(validate(path.resolve()))
 
+    def test_launch_animation_manifest(self):
+        example = ROOT / 'examples/launch_animation'
+        manifest = json.loads((example / 'manifest.json').read_text(encoding='utf-8'))
+        launch = manifest['appearance']['launchAnimation']
+        with tempfile.TemporaryDirectory() as folder:
+            src = Path(folder)
+            asset = src / launch['asset']
+            asset.parent.mkdir()
+            asset.write_bytes((example / launch['asset']).read_bytes())
+
+            def check(**fields):
+                (src / 'manifest.json').write_text(json.dumps({**manifest, **fields}))
+                return validate(src)
+
+            self.assertTrue(check())
+            rules = {**launch, 'frequency': 'interval', 'intervalMinutes': 60,
+                     'weekdays': [1, 5], 'timeWindow': {'start': '18:00', 'end': '02:00'},
+                     'theme': 'dark', 'fit': 'contain'}
+            self.assertTrue(check(appearance={'launchAnimation': rules}))
+            (src / 'main.js').write_text('')
+            self.assertTrue(check(entry='main.js', permissions=[]))
+            for fields in ({'entry': None}, {'permissions': []}, {'tools': []},
+                           {'appearance': None}):
+                with self.subTest(fields=fields), self.assertRaises(ValueError):
+                    check(**fields)
+            for fields in ({'asset': '../intro.gif'}, {'asset': 'media/missing.gif'},
+                           {'frequency': 'weekly'}, {'frequency': 'interval'},
+                           {'intervalMinutes': 5}, {'weekdays': [1, 1]}, {'weekdays': [True]},
+                           {'timeWindow': {'start': '24:00', 'end': '02:00'}},
+                           {'theme': 'system'}, {'fit': 'stretch'}):
+                with self.subTest(fields=fields), self.assertRaises(ValueError):
+                    check(appearance={'launchAnimation': {**launch, **fields}})
+            config = src / 'config.schema.json'
+            config.write_text('{"type":"object"}')
+            with self.assertRaisesRegex(ValueError, 'only support appearance'):
+                check()
+            config.unlink()
+            asset.write_bytes(b'not a GIF')
+            with self.assertRaisesRegex(ValueError, 'header'):
+                check()
+            with asset.open('wb') as stream:
+                stream.truncate(16 * 1024 * 1024 + 1)
+            with self.assertRaisesRegex(ValueError, '16 MiB'):
+                check()
+
     def test_endpoint_grants(self):
         with tempfile.TemporaryDirectory(prefix='.endpoint-test-', dir=ROOT) as folder:
             src = Path(folder)

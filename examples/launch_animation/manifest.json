@@ -1,0 +1,16 @@
+{
+  "id": "skytide.example.launch",
+  "name": "月光开场",
+  "version": "1.0.0",
+  "description": "以月光与涟漪演示应用内启动动画。",
+  "requiredCapabilities": [
+    "appearance.launchAnimation"
+  ],
+  "appearance": {
+    "launchAnimation": {
+      "asset": "media/intro.gif",
+      "frequency": "everyLaunch",
+      "fit": "cover"
+    }
+  }
+}

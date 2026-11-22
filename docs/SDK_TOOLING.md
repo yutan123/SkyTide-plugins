@@ -81,7 +81,7 @@ python3 tools/pack_plugin.py examples/hello --check
 python3 tools/pack_plugin.py examples/hello --out hello.zip
 ```
 
-工具检查基础清单、能力与权限、包内引用、origin、符号链接及容量。宿主安装校验还会检查参数 Schema、声明式布局、ZIP 目录与 CRC，安装校验是最终规则。
+工具检查基础清单、能力与权限、包内引用、origin、符号链接及容量。对于[启动动画插件](LAUNCH_ANIMATION.md)，也检查规则、素材大小和文件头；仅包含动画声明的包不需要 JavaScript 入口，Node mock 不负责验证动画解码或播放。宿主安装校验还会检查参数 Schema、声明式布局、ZIP 目录与 CRC，安装校验是最终规则。
 
 通知、可取消上传、PDF 文档、元数据与诊断接口见[宿主扩展接口](HOST_APIS.md)。Web UI 使用不包含 `allow-same-origin` 的 CSP sandbox，禁止依赖 Cookie、localStorage 或 IndexedDB 保存插件状态；持久状态通过宿主存储 API 管理。
 

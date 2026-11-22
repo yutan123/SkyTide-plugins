@@ -17,9 +17,9 @@
 | 配置 | `lib/plugin_config_dialog.dart`、`lib/plugin_contract.dart` | 类型化配置表单与共同校验规则 |
 | 接入 | `lib/ai.dart`、`lib/main.dart` | 启动恢复、AI 工具注册/分发及工具调用前后 Hook |
 
-运行时固定依赖 `quickjs_engine 0.1.7`，要求 Dart ≥3.8、Flutter ≥3.32。业务逻辑使用 QuickJS，网页界面按需使用系统 WebView。未启用的插件不创建 JavaScript isolate；每个启用插件会增加独立引擎的内存占用。
+运行时固定依赖 `quickjs_engine 0.1.7`，要求 Dart ≥3.8、Flutter ≥3.32。业务逻辑使用 QuickJS，网页界面按需使用系统 WebView。未启用的插件不创建 JavaScript isolate；启用脚本插件会增加独立引擎的内存占用。没有脚本入口的[启动动画插件](LAUNCH_ANIMATION.md)由宿主直接读取清单和素材，不创建 JavaScript 运行时。
 
-启动时恢复数据库中已启用的插件。启用操作会加载配置、执行入口、核对工具声明与注册、等待 `activate`，成功后才写入启用状态。关闭会撤下工具/Hook、取消网络请求、调用 `deactivate` 并释放运行时。保存配置时，已启用的插件会停止后使用新配置重启；重启失败时关闭插件。卸载会删除包文件、元信息、安全配置和私有存储。
+启动时恢复数据库中已启用的插件。脚本插件的启用操作会加载配置、执行入口、核对工具声明与注册、等待 `activate`，成功后才写入启用状态。关闭会撤下工具/Hook、取消网络请求、调用 `deactivate` 并释放运行时。保存配置时，已启用的插件会停止后使用新配置重启；重启失败时关闭插件。卸载会删除包文件、元信息、安全配置和私有存储。
 
 后台 Dart isolate 拥有自己的服务实例，按工具请求惰性恢复启用插件；插件不能把进程内变量当成跨 isolate 或跨启动持久状态。持久化使用 `tide.storage`。Android 主应用进程中的前台/后台 Flutter 引擎通过原生协调器共享生命周期锁、存储锁和插件代次。停用、更新、卸载和保存配置会递增代次，广播撤下旧实例并终止对应插件服务进程；工具、Hook、UI 和宿主 API 拒绝旧代次的迟到请求与结果。运行时异常退出时撤下本地工具并关闭网络请求；引擎分离时释放其持有的锁并移除等待者。
 
@@ -32,8 +32,8 @@ GitHub 仓库布局、上传及市场审核申请见[插件仓库与市场提交
 ZIP 根目录直接放这些文件，不能额外套一个顶级目录。扩展名使用 `.zip`。
 
 ```text
-manifest.json          必需：身份、版本、入口及能力声明
-main.js                必需：manifest.entry 指向的 JavaScript 入口，文件名可改
+manifest.json          必需：身份、版本与功能声明
+main.js                脚本插件必需：manifest.entry 指向的入口，文件名可改
 config.schema.json     可选：未提供内联 manifest.config 时读取
 icon.png               可选：manifest.icon 指向的本地图标
 ui.json                可选：manifest.ui.entry 指向的 Flutter 声明式布局
@@ -84,7 +84,7 @@ ui.json                可选：manifest.ui.entry 指向的 Flutter 声明式布
 }
 ```
 
-必需字段为 `id/name/version/entry`。`id` 是 6～64 位，必须以 skytide 开头（不区分大小写），仅允许英文字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`networkEndpoints`、`ui` 均可省略。
+所有插件都必须声明 `id`、`name` 和 `version`。脚本插件必须声明 `entry`；仅提供启动动画时省略 `entry`，设置 `appearance.launchAnimation`，见[启动动画接口](LAUNCH_ANIMATION.md)。`id` 是 6～64 位，必须以 skytide 开头（不区分大小写），仅允许英文字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`networkEndpoints`、`ui` 均可省略。
 
 工具名须匹配 `[a-zA-Z][a-zA-Z0-9_]{0,39}`，同包内唯一，最多 32 个。AI 侧名称为 `tp_<插件ID的SHA256前16位>_<工具名>`，插件只用自己的原始工具名注册，无需计算宿主前缀。
 
