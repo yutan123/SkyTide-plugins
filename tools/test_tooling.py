@@ -92,6 +92,60 @@ class ToolingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, '16 MiB'):
                 check()
 
+    def test_script_launch_animation_manifest(self):
+        example = ROOT / 'examples/launch_script'
+        manifest = json.loads((example / 'manifest.json').read_text(encoding='utf-8'))
+        launch = manifest['appearance']['launchAnimation']
+        with tempfile.TemporaryDirectory() as folder:
+            src = Path(folder)
+            (src / 'media').mkdir()
+            for path in ('launch.js', 'media/star.png'):
+                (src / path).write_bytes((example / path).read_bytes())
+
+            def check(options=None, **fields):
+                data = {**manifest, **fields}
+                if options is not None:
+                    data['appearance'] = {'launchAnimation': {**launch, **options}}
+                (src / 'manifest.json').write_text(json.dumps(data), encoding='utf-8')
+                return validate(src)
+
+            self.assertTrue(check())
+            self.assertTrue(check({'images': {}}))
+            for options in ({'asset': 'media/star.png'}, {'script': '../launch.js'},
+                            {'script': 'absent.js'}, {'fit': 'cover'}, {'durationMs': True},
+                            {'durationMs': 10001}, {'images': {'star': 'absent.png'}},
+                            {'images': {'bad/id': 'media/star.png'}}):
+                with self.subTest(options=options), self.assertRaises(ValueError):
+                    check(options)
+            with self.assertRaises(ValueError):
+                check(requiredCapabilities=['appearance.launchAnimation'])
+            (src / 'media/star.png').write_bytes(b'not a PNG')
+            with self.assertRaisesRegex(ValueError, 'header'):
+                check()
+
+    def test_message_actions_manifest(self):
+        with tempfile.TemporaryDirectory() as folder:
+            src = Path(folder)
+            (src / 'main.js').write_text("tide.registerMessageAction('save', () => {});")
+            manifest = {
+                'id': 'skytide.test.actions', 'name': 'Actions', 'version': '1.0.0',
+                'apiVersion': 1, 'entry': 'main.js', 'permissions': [], 'tools': [],
+                'requiredCapabilities': ['chat.messageActions'],
+            }
+            def check(actions):
+                (src / 'manifest.json').write_text(json.dumps({**manifest, 'messageActions': actions}))
+                return validate(src)
+            action = {'id': 'save', 'label': '收藏'}
+            self.assertTrue(check([action]))
+            self.assertTrue(check(None))
+            for invalid in ({}, [action, action], [action] * 17,
+                            [{'id': 'bad-id', 'label': 'Action'}],
+                            [{'id': 'save', 'label': 'bad\nlabel'}],
+                            [{'id': 'save', 'label': 'a' * 41}],
+                            [{**action, 'extra': True}]):
+                with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                    check(invalid)
+
     def test_endpoint_grants(self):
         with tempfile.TemporaryDirectory(prefix='.endpoint-test-', dir=ROOT) as folder:
             src = Path(folder)

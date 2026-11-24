@@ -153,6 +153,11 @@ export interface Tide {
 
   sleep(ms: number): Promise<void>;
   registerWorker(name: string, handler: (context: WorkerContext) => void | Promise<void>): void;
+  registerMessageAction(id: string, handler: (message: Readonly<{
+    id: string;
+    role: 'user' | 'assistant';
+    text: string;
+  }>) => string | void | Promise<string | void>): void;
   registerCommand(name: string, handler: (args: {text: string; botId: string; messageId: string}, context: Context) => void | Promise<void>): void;
   readonly database: PluginDatabase;
   readonly ai: {

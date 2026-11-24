@@ -1,6 +1,7 @@
 // SkyTide JavaScript SDK, API version 1.
 (() => {
   'use strict';
+  const messageActions = new Map();
   const tools = new Map(), workers = new Map(), commands = new Map(), events = new Map(), pending = new Map();
   let sequence = 0;
   const send = (channel, data) => sendMessage(channel, JSON.stringify(data));
@@ -116,6 +117,10 @@
   globalThis.tide = Object.freeze({
     apiVersion: 1,
     sleep: ms => rpc('runtime.sleep', {ms}),
+    registerMessageAction: (id, handler) => {
+      if (typeof id !== 'string' || typeof handler !== 'function' || messageActions.has(id)) throw new Error('Invalid or duplicate message action');
+      messageActions.set(id, handler);
+    },
     registerCommand: (name, handler) => {
       if (typeof name !== 'string' || typeof handler !== 'function' || commands.has(name)) throw new Error('Invalid or duplicate command');
       commands.set(name, handler);
@@ -139,7 +144,7 @@
       generate: options => rpc('ai.generate', options),
       cancel: requestId => rpc('ai.cancel', {requestId}),
     }),
-    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'background.generate', 'context.inject', 'context.prompts']),
+    capabilities: Object.freeze(['chat.read', 'chat.send', 'chat.files', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'chat.messageActions', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'background.generate', 'context.inject', 'context.prompts']),
     chat: Object.freeze({
       getContext: context => context.chat.getContext(),
       getBotInfo: context => context.chat.getBotInfo(),
@@ -250,6 +255,19 @@
   });
   globalThis.__tideDispatch = (id, kind, name, payload) => {
     Promise.resolve().then(async () => {
+      if (kind === 'validateMessageActions') {
+        for (const id of payload) if (!messageActions.has(id)) throw new Error('Unregistered message action: ' + id);
+        for (const id of messageActions.keys()) if (!payload.includes(id)) throw new Error('Undeclared message action: ' + id);
+        return null;
+      }
+      if (kind === 'messageAction') {
+        const handler = messageActions.get(name);
+        if (!handler) throw new Error('Unregistered message action: ' + name);
+        const result = await handler(Object.freeze(payload));
+        if (result == null) return null;
+        if (typeof result !== 'string' || result.length > 8192) throw new Error('Invalid message action result');
+        return result;
+      }
       if (kind === 'validateCommands') {
         for (const name of payload) if (!commands.has(name)) throw new Error('Unregistered command: ' + name);
         for (const name of commands.keys()) if (!payload.includes(name)) throw new Error('Undeclared command: ' + name);

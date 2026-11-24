@@ -17,7 +17,7 @@
 | 配置 | `lib/plugin_config_dialog.dart`、`lib/plugin_contract.dart` | 类型化配置表单与共同校验规则 |
 | 接入 | `lib/ai.dart`、`lib/main.dart` | 启动恢复、AI 工具注册/分发及工具调用前后 Hook |
 
-运行时固定依赖 `quickjs_engine 0.1.7`，要求 Dart ≥3.8、Flutter ≥3.32。业务逻辑使用 QuickJS，网页界面按需使用系统 WebView。未启用的插件不创建 JavaScript isolate；启用脚本插件会增加独立引擎的内存占用。没有脚本入口的[启动动画插件](LAUNCH_ANIMATION.md)由宿主直接读取清单和素材，不创建 JavaScript 运行时。
+运行时固定依赖 `quickjs_engine 0.1.7`，要求 Dart ≥3.8、Flutter ≥3.32。业务逻辑使用 QuickJS，网页界面按需使用系统 WebView。未启用的插件不创建 JavaScript isolate；启用脚本插件会增加独立引擎的内存占用。没有脚本入口的[启动动画插件](LAUNCH_ANIMATION.md)和[界面外观插件](INTERFACE_THEME.md)由宿主直接读取清单和素材，不创建 JavaScript 运行时。
 
 启动时恢复数据库中已启用的插件。脚本插件的启用操作会加载配置、执行入口、核对工具声明与注册、等待 `activate`，成功后才写入启用状态。关闭会撤下工具/Hook、取消网络请求、调用 `deactivate` 并释放运行时。保存配置时，已启用的插件会停止后使用新配置重启；重启失败时关闭插件。卸载会删除包文件、元信息、安全配置和私有存储。
 
@@ -84,7 +84,7 @@ ui.json                可选：manifest.ui.entry 指向的 Flutter 声明式布
 }
 ```
 
-所有插件都必须声明 `id`、`name` 和 `version`。脚本插件必须声明 `entry`；仅提供启动动画时省略 `entry`，设置 `appearance.launchAnimation`，见[启动动画接口](LAUNCH_ANIMATION.md)。`id` 是 6～64 位，必须以 skytide 开头（不区分大小写），仅允许英文字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`networkEndpoints`、`ui` 均可省略。
+所有插件都必须声明 `id`、`name` 和 `version`。普通脚本插件必须声明 `entry`；纯外观插件可省略 `entry`，使用 [`appearance.launchAnimation`](LAUNCH_ANIMATION.md) 或 [`appearance.interfaceTheme`](INTERFACE_THEME.md)。`id` 是 6～64 位，必须以 skytide 开头（不区分大小写），仅允许英文字母、数字、下划线、点和连字符；名称最多 80 字符。版本接受三段数字及可选预发布/构建后缀，不能把其他文本接在三段版本后作为任意后缀。`apiVersion` 默认 1，其他版本拒绝安装。`icon`、`config`、`tools`、`hooks`、`permissions`、`networkOrigins`、`networkEndpoints`、`ui` 均可省略。
 
 工具名须匹配 `[a-zA-Z][a-zA-Z0-9_]{0,39}`，同包内唯一，最多 32 个。AI 侧名称为 `tp_<插件ID的SHA256前16位>_<工具名>`，插件只用自己的原始工具名注册，无需计算宿主前缀。
 

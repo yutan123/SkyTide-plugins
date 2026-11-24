@@ -3,40 +3,80 @@ import json
 import re
 from urllib.parse import urlsplit
 from config_ui import validate_config_ui
+from interface_theme import validate_interface_theme
+
 
 
 def validate_launch_animation(manifest, package_file):
     if 'appearance' not in manifest:
         return False
     appearance = manifest['appearance']
-    if not isinstance(appearance, dict) or set(appearance) != {'launchAnimation'}:
-        raise ValueError('appearance must contain only launchAnimation')
+    if not isinstance(appearance, dict) or not appearance or appearance.keys() - {'launchAnimation', 'interfaceTheme'}:
+        raise ValueError('invalid appearance fields')
+    if 'launchAnimation' not in appearance:
+        return False
     launch = appearance['launchAnimation']
-    allowed = {'asset', 'frequency', 'intervalMinutes', 'weekdays', 'timeWindow', 'theme', 'fit'}
+    allowed = {'asset', 'script', 'images', 'durationMs', 'frequency', 'intervalMinutes',
+               'weekdays', 'timeWindow', 'theme', 'fit'}
     if not isinstance(launch, dict) or set(launch) - allowed:
         raise ValueError('invalid launchAnimation fields')
-    asset = launch.get('asset')
-    if not isinstance(asset, str) or re.search(r'[\\:\x00-\x1f]', asset) or any(
-        part in ('', '.', '..') for part in asset.split('/')
-    ):
-        raise ValueError('launchAnimation.asset must be a package-relative path')
-    file = package_file(asset)
-    extension = file.suffix.lower()
-    if extension not in ('.mp4', '.webm', '.gif', '.webp'):
-        raise ValueError('launchAnimation.asset must be MP4, WebM, GIF or WebP')
-    limit = 64 if extension in ('.mp4', '.webm') else 16
-    if not 0 < file.stat().st_size <= limit * 1024 * 1024:
-        raise ValueError(f'launch animation must be nonempty and at most {limit} MiB')
-    with file.open('rb') as stream:
-        header = stream.read(12)
-    signatures = {
-        '.mp4': header[4:8] == b'ftyp',
-        '.webm': header.startswith(b'\x1a\x45\xdf\xa3'),
-        '.gif': header.startswith((b'GIF87a', b'GIF89a')),
-        '.webp': header.startswith(b'RIFF') and header[8:12] == b'WEBP',
-    }
-    if not signatures[extension]:
-        raise ValueError('launch animation header does not match the extension')
+
+    def relative_file(path):
+        if not isinstance(path, str) or re.search(r'[\\:\x00-\x1f]', path) or any(
+            part in ('', '.', '..') for part in path.split('/')
+        ):
+            raise ValueError('launch animation files must use package-relative paths')
+        return package_file(path)
+
+    def image_header(file, formats, limit):
+        extension = file.suffix.lower()
+        if extension not in formats:
+            raise ValueError('unsupported launch asset format')
+        if not 0 < file.stat().st_size <= limit:
+            raise ValueError(f'launch asset must be nonempty and at most {limit // (1024 * 1024)} MiB')
+        with file.open('rb') as stream:
+            header = stream.read(12)
+        signatures = {
+            '.mp4': header[4:8] == b'ftyp',
+            '.webm': header.startswith(bytes.fromhex('1a45dfa3')),
+            '.gif': header.startswith((b'GIF87a', b'GIF89a')),
+            '.webp': header.startswith(b'RIFF') and header[8:12] == b'WEBP',
+            '.png': header.startswith(bytes.fromhex('89504e470d0a1a0a')),
+            '.jpg': header.startswith(bytes.fromhex('ffd8ff')),
+            '.jpeg': header.startswith(bytes.fromhex('ffd8ff')),
+        }
+        if not signatures[extension]:
+            raise ValueError('launch animation header does not match the extension')
+
+    if 'script' in launch:
+        duration = launch.get('durationMs')
+        capabilities = manifest.get('requiredCapabilities', [])
+        if ('asset' in launch or 'fit' in launch or type(duration) is not int or
+                not 250 <= duration <= 10000 or not isinstance(capabilities, list) or
+                'appearance.launchAnimation.script' not in capabilities):
+            raise ValueError('script launch animation needs its capability and durationMs (250–10000), without asset or fit')
+        script = relative_file(launch['script'])
+        if (script.suffix.lower() != '.js' or not 0 < script.stat().st_size <= 128 * 1024 or
+                not script.read_text(encoding='utf-8').strip()):
+            raise ValueError('launch script must be nonempty UTF-8 JS, at most 128 KiB')
+        images = launch.get('images', {})
+        if not isinstance(images, dict) or len(images) > 16:
+            raise ValueError('launch images must be an object with at most 16 entries')
+        total = 0
+        for key, path in images.items():
+            if not re.fullmatch(r'[a-zA-Z0-9_-]{1,40}', key):
+                raise ValueError('invalid launch image ID')
+            file = relative_file(path)
+            image_header(file, {'.png', '.jpg', '.jpeg', '.webp'}, 4 * 1024 * 1024)
+            total += file.stat().st_size
+        if total > 16 * 1024 * 1024:
+            raise ValueError('launch images exceed 16 MiB in total')
+    else:
+        if 'images' in launch or 'durationMs' in launch:
+            raise ValueError('images and durationMs require a launch script')
+        file = relative_file(launch.get('asset'))
+        limit = 64 if file.suffix.lower() in ('.mp4', '.webm') else 16
+        image_header(file, {'.mp4', '.webm', '.gif', '.webp'}, limit * 1024 * 1024)
     frequency = launch.get('frequency', 'daily')
     if frequency not in ('everyLaunch', 'daily', 'oncePerVersion', 'interval'):
         raise ValueError('invalid launchAnimation.frequency')
@@ -87,7 +127,8 @@ def validate(src):
         raise ValueError('invalid semantic version')
     if m.get('apiVersion', 1) != 1:
         raise ValueError('unsupported apiVersion')
-    capabilities = {'chat.files', 'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'background.generate', 'context.inject', 'context.prompts', 'appearance.launchAnimation'}
+    capabilities = {'chat.files', 'chat.read', 'chat.send', 'media.download', 'invocation.context', 'modules.commonjs', 'resources.read', 'ui.web', 'events.chat', 'tasks', 'notifications', 'network.transfer', 'media.requestHeaders', 'network.originPatterns', 'files', 'network.files', 'media.process', 'schema.nested', 'config.ui', 'storage.large', 'tasks.recurring', 'workers', 'runtime.sleep', 'database', 'database.vector', 'ai', 'commands', 'chat.messageActions', 'events.priority', 'network.sockets', 'network.websocket', 'network.stream', 'network.binary', 'network.endpoints', 'crypto', 'auth.pkce', 'auth.oauth', 'credentials', 'background.send', 'background.generate', 'context.inject', 'context.prompts', 'appearance.launchAnimation'}
+    capabilities.update({'appearance.launchAnimation.script', 'appearance.interfaceTheme'})
     for field, allowed in [('permissions', {'workers', 'database', 'ai', 'storage', 'files', 'media.process', 'network', 'chat.read', 'chat.send', 'media.download', 'tasks', 'notifications', 'network.sockets', 'network.cleartext', 'network.local', 'auth.browser', 'credentials', 'background.send', 'background.generate', 'context.inject'}), ('requiredCapabilities', capabilities), ('hooks', {'context.build', 'tool.before', 'tool.after', 'app.ready', 'chat.message', 'chat.sent', 'task.trigger'})]:
         values = m.get(field, [])
         if not isinstance(values, list) or any(not isinstance(v, str) or v not in allowed for v in values):
@@ -127,6 +168,22 @@ def validate(src):
             raise ValueError('invalid worker intervalMs')
     if workers and 'workers' not in m.get('permissions', []):
         raise ValueError('workers permission required')
+    actions = m.get('messageActions')
+    if actions is not None:
+        if not isinstance(actions, list) or len(actions) > 16:
+            raise ValueError('messageActions must be an array of at most 16 actions')
+        ids = set()
+        for action in actions:
+            if not isinstance(action, dict) or set(action) != {'id', 'label'}:
+                raise ValueError('messageActions entries require id and label')
+            name, label = action['id'], action['label']
+            if not isinstance(name, str) or not re.fullmatch(r'[a-z][a-z0-9_]{0,39}', name) or name in ids:
+                raise ValueError('invalid or duplicate message action id')
+            if (not isinstance(label, str) or not 1 <= len(label) <= 40
+                    or label.strip() != label
+                    or any(ord(c) < 32 or 127 <= ord(c) <= 159 or c in ('\u2028', '\u2029') for c in label)):
+                raise ValueError('invalid message action label')
+            ids.add(name)
     commands = m.get('commands', [])
     if not isinstance(commands, list) or len(commands) > 32 or any(not isinstance(v, str) or not re.fullmatch(r'[a-z][a-z0-9_]{0,39}', v) for v in commands) or len(set(commands)) != len(commands):
         raise ValueError('invalid or duplicate commands')
@@ -144,11 +201,12 @@ def validate(src):
         return p
 
     has_launch = validate_launch_animation(m, package_file)
-    if 'entry' not in m and has_launch:
+    has_theme = validate_interface_theme(m.get('appearance', {}), package_file)
+    if 'entry' not in m and (has_launch or has_theme):
         allowed = {'id', 'name', 'version', 'description', 'author', 'icon',
                    'apiVersion', 'appearance', 'requiredCapabilities'}
         if set(m) - allowed or (src / 'config.schema.json').is_file():
-            raise ValueError('launch animation plugins without entry only support appearance and metadata')
+            raise ValueError('appearance plugins without entry only support appearance and metadata')
     else:
         entry = package_file(m.get('entry'))
         if entry.suffix != '.js' or entry.stat().st_size > 2 * 1024 * 1024:

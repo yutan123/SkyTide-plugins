@@ -6,6 +6,8 @@ SkyTide 插件以普通 `.zip` 文件分发。脚本插件使用 JavaScript，�
 - [应用内启动动画接口与示例](docs/LAUNCH_ANIMATION.md)
 - [消息事件与持久任务](docs/EVENTS_AND_TASKS.md)
 - [常驻任务、AI 与文档数据库](docs/WORKERS_AI_DATABASE.md)
+- [界面外观插件](docs/INTERFACE_THEME.md)
+- [聊天消息快捷操作](docs/MESSAGE_ACTIONS.md)
 - [私有文件与媒体处理](docs/FILES_AND_MEDIA.md)
 - [通知、网络传输与诊断](docs/HOST_APIS.md)
 - [SDK 类型与本地测试](docs/SDK_TOOLING.md)

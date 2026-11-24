@@ -1,0 +1,103 @@
+{
+  "id": "skytide.example.interfacetheme",
+  "name": "界面外观示例",
+  "version": "1.0.0",
+  "requiredCapabilities": [
+    "appearance.interfaceTheme"
+  ],
+  "appearance": {
+    "interfaceTheme": {
+      "common": {
+        "surfaces": {
+          "card.bot": {
+            "decorations": [
+              {
+                "asset": "decor/star.png",
+                "anchor": "topRight",
+                "offsetX": -10,
+                "offsetY": 8,
+                "width": 24,
+                "height": 24,
+                "opacity": 0.48
+              },
+              {
+                "asset": "decor/star.png",
+                "anchor": "bottomLeft",
+                "offsetX": 8,
+                "offsetY": -7,
+                "width": 24,
+                "height": 24,
+                "opacity": 0.28
+              }
+            ],
+            "stroke": "#809585C4",
+            "strokeWidth": 1,
+            "liquid": {
+              "fill": "#329585C4"
+            }
+          },
+          "dialog.confirm": {
+            "decorations": [
+              {
+                "asset": "decor/star.png",
+                "anchor": "topRight",
+                "offsetX": -10,
+                "offsetY": 8,
+                "width": 24,
+                "height": 24,
+                "opacity": 0.48
+              },
+              {
+                "asset": "decor/star.png",
+                "anchor": "bottomLeft",
+                "offsetX": 8,
+                "offsetY": -7,
+                "width": 24,
+                "height": 24,
+                "opacity": 0.28
+              }
+            ],
+            "stroke": "#809585C4"
+          },
+          "chat.input": {
+            "stroke": "#809585C4"
+          }
+        }
+      },
+      "light": {
+        "colors": {
+          "primary": "#695398",
+          "primaryLight": "#9A80CE",
+          "pageBackground": "#F8F3FF"
+        },
+        "surfaces": {
+          "card.bot": {
+            "frosted": {
+              "fill": "#EFFFFAFF"
+            }
+          },
+          "chat.header": {
+            "fill": "#F1E8FA"
+          }
+        }
+      },
+      "dark": {
+        "colors": {
+          "primary": "#C0A6F4",
+          "primaryLight": "#9B81D0",
+          "pageBackground": "#1C1826"
+        },
+        "surfaces": {
+          "card.bot": {
+            "frosted": {
+              "fill": "#DD30263C"
+            }
+          },
+          "chat.header": {
+            "fill": "#30263C"
+          }
+        }
+      }
+    }
+  }
+}

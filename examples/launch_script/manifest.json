@@ -1,0 +1,15 @@
+{
+  "id": "skytide.example.launchscript",
+  "name": "JavaScript 启动动画示例",
+  "version": "1.0.0",
+  "description": "使用 JavaScript、透明星形贴图和实时粒子绘制开场。",
+  "requiredCapabilities": ["appearance.launchAnimation.script"],
+  "appearance": {
+    "launchAnimation": {
+      "script": "launch.js",
+      "durationMs": 3100,
+      "images": {"star": "media/star.png"},
+      "frequency": "everyLaunch"
+    }
+  }
+}
